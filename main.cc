@@ -3,7 +3,7 @@
 
 using namespace std;
 
-typedef grid<float, 8, 8, 8> field;
+typedef grid<float, 8, 8, 8, 16> field;
 
 int main(){
   field V;

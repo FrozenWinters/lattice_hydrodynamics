@@ -7,7 +7,7 @@ namespace xs = xsimd;
 template<typename T, size_t L, size_t W, size_t H, size_t VecSize>
 class grid;
 
-template<typename T, size_t L, size_t W, size_t H, size_t VecSize = 4>
+template<typename T, size_t L, size_t W, size_t H, size_t VecSize>
 std::ostream& operator<<(std::ostream& os, const grid<T, L, W, H, VecSize>& gr){
   using G = grid<T, L, W, H, VecSize>;
 

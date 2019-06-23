@@ -8,8 +8,8 @@ mac: main.cc
 	time ./prog.elf
 
 stamp: main.cc
-	$(CXX) $(CXXFLAGS) -xMIC-AVX512 -c main.cc
-	$(CXX) $(CXXFLAGS) -xMIC-AVX512 -oprog.elf main.o
+	icpc $(CXXFLAGS) -xMIC-AVX512 -c main.cc
+	icpc $(CXXFLAGS) -xMIC-AVX512 -oprog.elf main.o
 	objdump -d -r main.o > dump.as
 	rm main.o
 	time ./prog.elf
