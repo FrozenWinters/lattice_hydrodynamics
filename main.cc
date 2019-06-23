@@ -1,17 +1,19 @@
-#include "algebra.h"
-#include iostream;
+#include "algebra.hpp"
+#include <iostream>
 
 using namespace std;
 
-typedef grid<double, 24, 24, 24> field;
+typedef grid<float, 8, 8, 8> field;
 
 int main(){
-  field V, N;
+  field V;
   V.fillRand();
   cout << "Matrix V:" << endl;
   cout << V;
-  V.computeN(&N);
 
-  out << "Matrix N:" << endl;
+  field N = {};
+  V.computeN(N);
+
+  cout << "Matrix N:" << endl;
   cout << N;
 }
