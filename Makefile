@@ -1,4 +1,4 @@
-CXXFLAGS = -std=c++17 -O3 -march=native -fno-stack-protector -I../../xsimd/include
+CXXFLAGS = -std=c++17 -O3 -march=native -fno-stack-protector -I../xsimd/include
 
 mac: main.cc
 	$(CXX) $(CXXFLAGS) -c main.cc
