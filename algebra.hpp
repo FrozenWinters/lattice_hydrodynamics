@@ -67,14 +67,14 @@ inline void grid<T, L, W, H, VecSize>::computeN(grid_t& dest) const{
       for(int z = 0; z < H; ++z){
         for(int y = 0; y < W; ++y){
           int x = 0;
-          for(; x < VecSize && x < L; ++x){
+          /*for(; x < VecSize && x < L; ++x){
             int update = 0;
             update += data[I_off(B, x, y, z, B, 1)] * data[I_off(A, x, y, z, B, 1)];
             update -= data[I_off(B, x, y, z, B, -1)] * data[I_off(A, x, y, z, B, -1)];
             dest.data[I(A, x, y, z)] += update;
-          }
+          }*/
 
-          for(; x < L - VecSize; x += VecSize){
+          for(; x < L /*- VecSize*/; x += VecSize){
             if(B != 0){
               batch_t row_a(&data[I_off(B, x, y, z, B, 1)], xs::aligned_mode());
               batch_t row_b(&data[I_off(A, x, y, z, B, 1)], xs::aligned_mode());
@@ -100,12 +100,12 @@ inline void grid<T, L, W, H, VecSize>::computeN(grid_t& dest) const{
             }
           }
 
-          for(; x < L; ++x){
+          /*for(; x < L; ++x){
             T update = 0;
             update += data[I_off(B, x, y, z, B, 1)] * data[I_off(A, x, y, z, B, 1)];
             update -= data[I_off(B, x, y, z, B, -1)] * data[I_off(A, x, y, z, B, -1)];
             dest.data[I(A, x, y, z)] += update;
-          }
+          }*/
         }
       }
     }
