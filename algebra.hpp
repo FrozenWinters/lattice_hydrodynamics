@@ -7,15 +7,17 @@ namespace xs = xsimd;
 template<typename T, size_t L, size_t W, size_t H, size_t VecSize>
 class grid;
 
+using size_t = std::size_t;
+
 template<typename T, size_t L, size_t W, size_t H, size_t VecSize>
 std::ostream& operator<<(std::ostream& os, const grid<T, L, W, H, VecSize>& gr){
   using G = grid<T, L, W, H, VecSize>;
 
-  for(int z = 0; z < H; ++z){
+  for(u_int z = 0; z < H; ++z){
     os << "[ ";
-    for(int y = 0; y < W; ++y){
+    for(u_int y = 0; y < W; ++y){
       os << std::endl << "    [ ";
-      for(int x = 0; x < L; ++x){
+      for(u_int x = 0; x < L; ++x){
         os << "< " << gr.data[G::I(0, x, y, z)] << ", " << gr.data[G::I(1, x, y, z)]
           << ", " << gr.data[G::I(2, x, y, z)] << " > ";
       }
@@ -62,11 +64,12 @@ private:
 
 template<typename T, size_t L, size_t W, size_t H, size_t VecSize>
 inline void grid<T, L, W, H, VecSize>::computeN(grid_t& dest) const{
+  //#pragma omp parallel for
   for(int A = 0; A < 3; ++A){
     for(int B = 0; B < 3; ++B){
-      for(int z = 0; z < H; ++z){
-        for(int y = 0; y < W; ++y){
-          int x = 0;
+      for(u_int z = 0; z < H; ++z){
+        for(u_int y = 0; y < W; ++y){
+          u_int x = 0;
           /*for(; x < VecSize && x < L; ++x){
             int update = 0;
             update += data[I_off(B, x, y, z, B, 1)] * data[I_off(A, x, y, z, B, 1)];
@@ -115,12 +118,12 @@ inline void grid<T, L, W, H, VecSize>::computeN(grid_t& dest) const{
 template<typename T, size_t L, size_t W, size_t H, size_t VecSize>
 inline void grid<T, L, W, H, VecSize>::fillRand(){
   std::random_device rand;
-  std::mt19937 generator(rand());
+  std::default_random_engine generator(rand());
   std::uniform_real_distribution<> distribution(0.0, 6.0);
   for(int A = 0; A < 3; ++A){
-    for(int z = 0; z < H; ++z){
-      for(int y = 0; y < W; ++y){
-        for(int x = 0; x < L; ++x){
+    for(u_int z = 0; z < H; ++z){
+      for(u_int y = 0; y < W; ++y){
+        for(u_int x = 0; x < L; ++x){
           data[I(A, x, y, z)] = distribution(generator);
         }
       }
