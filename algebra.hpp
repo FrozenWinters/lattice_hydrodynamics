@@ -7,7 +7,7 @@ namespace xs = xsimd;
 template<typename T, size_t L, size_t W, size_t H, size_t VecSize>
 class grid;
 
-using size_t = std::size_t;
+//using size_t = std::size_t;
 
 template<typename T, size_t L, size_t W, size_t H, size_t VecSize>
 std::ostream& operator<<(std::ostream& os, const grid<T, L, W, H, VecSize>& gr){
@@ -64,7 +64,6 @@ private:
 
 template<typename T, size_t L, size_t W, size_t H, size_t VecSize>
 inline void grid<T, L, W, H, VecSize>::computeN(grid_t& dest) const{
-  //#pragma omp parallel for
   for(int A = 0; A < 3; ++A){
     for(int B = 0; B < 3; ++B){
       for(u_int z = 0; z < H; ++z){
@@ -103,12 +102,23 @@ inline void grid<T, L, W, H, VecSize>::computeN(grid_t& dest) const{
             }
           }
 
-          /*for(; x < L; ++x){
+          // Correct the warped entries
+          if(B == 0){
             T update = 0;
-            update += data[I_off(B, x, y, z, B, 1)] * data[I_off(A, x, y, z, B, 1)];
-            update -= data[I_off(B, x, y, z, B, -1)] * data[I_off(A, x, y, z, B, -1)];
-            dest.data[I(A, x, y, z)] += update;
-          }*/
+            update += data[I_off(B, 0, y, z, B, 1)] * data[I_off(A, 0, y, z, B, 1)];
+            update -= data[I_off(B, 0, y, z, B, -1)] * data[I_off(A, 0, y, z, B, -1)];
+            dest.data[I(A, 0, y, z)] += update;
+            update += data[I_off(B, L-1, y, z, B, 1)] * data[I_off(A, L-1, y, z, B, 1)];
+            update -= data[I_off(B, L-1, y, z, B, -1)] * data[I_off(A, L-1, y, z, B, -1)];
+            dest.data[I(A, L-1, y, z)] += update;
+            update += data[I_off(B, 0, y, z, B, 1)] * data[I_off(A, 0, y, z, B, 1)];
+            update -= data[I_off(B, 0, y, z, B, -1)] * data[I_off(A, 0, y, z, B, -1)];
+            dest.data[I(A, 0, y, z)] += update;
+            update += data[I_off(B, L-1, y, z, B, 1)] * data[I_off(A, L-1, y, z, B, 1)];
+            update -= data[I_off(B, L-1, y, z, B, -1)] * data[I_off(A, L-1, y, z, B, -1)];
+            dest.data[I(A, L-1, y, z)] += update;
+
+          }
         }
       }
     }
