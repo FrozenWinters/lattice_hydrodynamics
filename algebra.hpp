@@ -7,8 +7,6 @@ namespace xs = xsimd;
 template<typename T, size_t L, size_t W, size_t H, size_t VecSize>
 class grid;
 
-//using size_t = std::size_t;
-
 template<typename T, size_t L, size_t W, size_t H, size_t VecSize>
 std::ostream& operator<<(std::ostream& os, const grid<T, L, W, H, VecSize>& gr){
   using G = grid<T, L, W, H, VecSize>;
@@ -68,16 +66,8 @@ inline void grid<T, L, W, H, VecSize>::computeN(grid_t& dest) const{
     for(int B = 0; B < 3; ++B){
       for(u_int z = 0; z < H; ++z){
         for(u_int y = 0; y < W; ++y){
-          u_int x = 0;
-          /*for(; x < VecSize && x < L; ++x){
-            int update = 0;
-            update += data[I_off(B, x, y, z, B, 1)] * data[I_off(A, x, y, z, B, 1)];
-            update -= data[I_off(B, x, y, z, B, -1)] * data[I_off(A, x, y, z, B, -1)];
-            dest.data[I(A, x, y, z)] += update;
-          }*/
-
-          for(; x < L /*- VecSize*/; x += VecSize){
-            if(B != 0){
+          if(B != 0){
+            for(u_int x = 0; x < L; x += VecSize){
               batch_t row_a(&data[I_off(B, x, y, z, B, 1)], xs::aligned_mode());
               batch_t row_b(&data[I_off(A, x, y, z, B, 1)], xs::aligned_mode());
               batch_t row_c(&dest.data[I(A, x, y, z)], xs::aligned_mode());
@@ -88,7 +78,16 @@ inline void grid<T, L, W, H, VecSize>::computeN(grid_t& dest) const{
               row_a *= row_b;
               row_c -= row_a;
               row_c.store_aligned(&dest.data[I(A, x, y, z)]);
-            } else{
+            }
+          } else{
+            u_int x = 0;
+            for(; x < VecSize; ++x){
+              int update = 0;
+              update += data[I_off(B, x, y, z, B, 1)] * data[I_off(A, x, y, z, B, 1)];
+              update -= data[I_off(B, x, y, z, B, -1)] * data[I_off(A, x, y, z, B, -1)];
+              dest.data[I(A, x, y, z)] += update;
+            }
+            for(; x < L - VecSize; x += VecSize){
               batch_t row_a(&data[I_off(B, x, y, z, B, 1)]);
               batch_t row_b(&data[I_off(A, x, y, z, B, 1)]);
               batch_t row_c(&dest.data[I(A, x, y, z)], xs::aligned_mode());
@@ -100,24 +99,12 @@ inline void grid<T, L, W, H, VecSize>::computeN(grid_t& dest) const{
               row_c -= row_a;
               row_c.store_aligned(&dest.data[I(A, x, y, z)]);
             }
-          }
-
-          // Correct the warped entries
-          if(B == 0){
-            T update = 0;
-            update += data[I_off(B, 0, y, z, B, 1)] * data[I_off(A, 0, y, z, B, 1)];
-            update -= data[I_off(B, 0, y, z, B, -1)] * data[I_off(A, 0, y, z, B, -1)];
-            dest.data[I(A, 0, y, z)] += update;
-            update += data[I_off(B, L-1, y, z, B, 1)] * data[I_off(A, L-1, y, z, B, 1)];
-            update -= data[I_off(B, L-1, y, z, B, -1)] * data[I_off(A, L-1, y, z, B, -1)];
-            dest.data[I(A, L-1, y, z)] += update;
-            update += data[I_off(B, 0, y, z, B, 1)] * data[I_off(A, 0, y, z, B, 1)];
-            update -= data[I_off(B, 0, y, z, B, -1)] * data[I_off(A, 0, y, z, B, -1)];
-            dest.data[I(A, 0, y, z)] += update;
-            update += data[I_off(B, L-1, y, z, B, 1)] * data[I_off(A, L-1, y, z, B, 1)];
-            update -= data[I_off(B, L-1, y, z, B, -1)] * data[I_off(A, L-1, y, z, B, -1)];
-            dest.data[I(A, L-1, y, z)] += update;
-
+            for(; x < L; ++x){
+              int update = 0;
+              update += data[I_off(B, x, y, z, B, 1)] * data[I_off(A, x, y, z, B, 1)];
+              update -= data[I_off(B, x, y, z, B, -1)] * data[I_off(A, x, y, z, B, -1)];
+              dest.data[I(A, x, y, z)] += update;
+            }
           }
         }
       }
