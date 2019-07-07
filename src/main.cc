@@ -3,7 +3,7 @@
 
 using namespace std;
 
-using field = grid<config::real, config.L, config.W, config.H, config.VecSize>;
+using field = grid<typename BuildOptions::real, config.L, config.W, config.H, config.VecSize>;
 
 void __attribute__((noinline)) computeN(const field& in, field& out){
   in.computeN(out);
@@ -12,8 +12,8 @@ void __attribute__((noinline)) computeN(const field& in, field& out){
 int main(){
   field& V = *(new field());
   V.fillRand();
-  //cout << "Matrix V:" << endl;
-  //cout << V;
+  cout << "Matrix V:" << endl;
+  cout << V;
 
   field& N = *(new field());
   for(u_int i = 0; i < 40; i++){
@@ -21,6 +21,6 @@ int main(){
     computeN(V, N);
   }
 
-  //cout << "Matrix N:" << endl;
-  //cout << N;
+  cout << "Matrix N:" << endl;
+  cout << N;
 }
