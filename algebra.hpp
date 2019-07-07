@@ -17,7 +17,7 @@ std::ostream& operator<<(std::ostream& os, const grid<T, L, W, H, VecSize>& gr){
       os << std::endl << "    [ ";
       for(u_int x = 0; x < L; ++x){
         os << "< " << gr.data[G::I(0, x, y, z)] << ", " << gr.data[G::I(1, x, y, z)]
-          << ", " << gr.data[G::I(2, x, y, z)] << " > ";
+          /*<< ", " << gr.data[G::I(2, x, y, z)]*/ << " > ";
       }
       os << "] ";
     }
@@ -116,7 +116,7 @@ template<typename T, size_t L, size_t W, size_t H, size_t VecSize>
 inline void grid<T, L, W, H, VecSize>::fillRand(){
   std::random_device rand;
   std::default_random_engine generator(rand());
-  std::uniform_real_distribution<> distribution(0.0, 6.0);
+  std::uniform_real_distribution<> distribution(2.0, 15.0);
   for(int A = 0; A < 3; ++A){
     for(u_int z = 0; z < H; ++z){
       for(u_int y = 0; y < W; ++y){
