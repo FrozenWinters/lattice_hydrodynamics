@@ -17,7 +17,7 @@ std::ostream& operator<<(std::ostream& os, const grid<T, L, W, H, VecSize>& gr){
       os << std::endl << "    [ ";
       for(u_int x = 0; x < L; ++x){
         os << "< " << gr.data[G::I(0, x, y, z)] << ", " << gr.data[G::I(1, x, y, z)]
-          /*<< ", " << gr.data[G::I(2, x, y, z)]*/ << " > ";
+          << ", " << gr.data[G::I(2, x, y, z)] << " > ";
       }
       os << "] ";
     }

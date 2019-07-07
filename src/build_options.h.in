@@ -1,0 +1,16 @@
+#pragma once
+
+#cmakedefine _REAL @REAL@
+#cmakedefine _L @L@
+#cmakedefine _W @W@
+#cmakedefine _L @H@
+#cmakedefine _VEC @VEC@
+
+struct BuildOptions {
+  using real = _REAL;
+	constexpr static size_t L = _L;
+  constexpr static size_t W = _W;
+  constexpr static size_t H = _H;
+  constexpr static size_t VecSize = _VEC;
+};
+inline constexpr BuildOptions config;

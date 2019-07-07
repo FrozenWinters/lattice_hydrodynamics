@@ -1,17 +1,15 @@
 #include "algebra.hpp"
-#include <omp.h>
-#include <iostream>
+#include <build_options.h>
 
 using namespace std;
 
-typedef grid<float, 200, 200, 200, 16> field;
+using field = grid<config::real, config.L, config.W, config.H, config.VecSize>;
 
 void __attribute__((noinline)) computeN(const field& in, field& out){
   in.computeN(out);
 }
 
 int main(){
-  cout << omp_get_max_threads() << endl;
   field& V = *(new field());
   V.fillRand();
   //cout << "Matrix V:" << endl;
@@ -19,9 +17,8 @@ int main(){
 
   field& N = *(new field());
   for(u_int i = 0; i < 40; i++){
-    //N = {};
+    N = {};
     computeN(V, N);
-    //V.computeN(N);
   }
 
   //cout << "Matrix N:" << endl;
