@@ -3,7 +3,7 @@
 
 using namespace std;
 
-using field = grid<typename BuildOptions::real, config.L, config.W, config.H, config.VecSize>;
+using field = grid<typename BuildOptions::real, config.L, config.W, config.H>;
 
 void __attribute__((noinline)) computeN(const field& in, field& out){
   in.computeN(out);

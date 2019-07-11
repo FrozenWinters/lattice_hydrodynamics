@@ -1,15 +1,12 @@
-#include "xsimd/xsimd.hpp"
 #include <random>
 #include <iostream>
 
-namespace xs = xsimd;
-
-template<typename T, size_t L, size_t W, size_t H, size_t VecSize>
+template<typename T, size_t L, size_t W, size_t H>
 class grid;
 
-template<typename T, size_t L, size_t W, size_t H, size_t VecSize>
-std::ostream& operator<<(std::ostream& os, const grid<T, L, W, H, VecSize>& gr){
-  using G = grid<T, L, W, H, VecSize>;
+template<typename T, size_t L, size_t W, size_t H>
+std::ostream& operator<<(std::ostream& os, const grid<T, L, W, H>& gr){
+  using G = grid<T, L, W, H>;
 
   for(u_int z = 0; z < H; ++z){
     os << "[ ";
@@ -27,11 +24,10 @@ std::ostream& operator<<(std::ostream& os, const grid<T, L, W, H, VecSize>& gr){
   return os;
 }
 
-template<typename T, size_t L, size_t W, size_t H, size_t VecSize = 4>
+template<typename T, size_t L, size_t W, size_t H>
 class grid{
 public:
-  using grid_t = grid<T, L, W, H, VecSize>;
-  using batch_t = xs::batch<T, VecSize>;
+  using grid_t = grid<T, L, W, H>;
 
   void computeN(grid_t& dest) const;
 
@@ -54,13 +50,13 @@ private:
     }
   }
 
-  friend std::ostream & operator<<<T, L, W, H, VecSize>(std::ostream &os, const grid_t &gr);
+  friend std::ostream & operator<<<T, L, W, H>(std::ostream &os, const grid_t &gr);
 
-  alignas(sizeof(T) * VecSize) T data[3 * L * W * H];
+  alignas(sizeof(T) * 16) T data[3 * L * W * H];
 };
 
 
-template<typename T, size_t L, size_t W, size_t H, size_t VecSize>
+/*template<typename T, size_t L, size_t W, size_t H, size_t VecSize>
 inline void grid<T, L, W, H, VecSize>::computeN(grid_t& dest) const{
   for(int A = 0; A < 3; ++A){
     for(int B = 0; B < 3; ++B){
@@ -110,10 +106,10 @@ inline void grid<T, L, W, H, VecSize>::computeN(grid_t& dest) const{
       }
     }
   }
-}
+}*/
 
-template<typename T, size_t L, size_t W, size_t H, size_t VecSize>
-inline void grid<T, L, W, H, VecSize>::fillRand(){
+template<typename T, size_t L, size_t W, size_t H>
+inline void grid<T, L, W, H>::fillRand(){
   std::random_device rand;
   std::default_random_engine generator(rand());
   std::uniform_real_distribution<> distribution(2.0, 15.0);
