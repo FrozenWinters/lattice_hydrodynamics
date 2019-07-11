@@ -7,8 +7,8 @@ set(_L 8)
 set(_W 8)
 set(_H 8)
 
-set(CMAKE_CXX_FLAGS "-O3 -Wall -std=c++17 -xMIC-AVX512")
-SET(CMAKE_CXX_COMPILER "icpc")
+set(CMAKE_CXX_FLAGS "-O3 -Wall -std=c++17")
+SET(CMAKE_CXX_COMPILER "g++")
 
 configure_file("src/build_options.h.in" "include/build_options.h")
 

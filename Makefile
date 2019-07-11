@@ -1,7 +1,7 @@
-CXXFLAGS = -fopenmp -O3 -Wall -std=c++17 -I../xsimd/include
+CXXFLAGS = -O3 -Wall -std=c++17
 
-mac: main.cc
-	$(CXX) $(CXXFLAGS) -march=native -c main.cc
+mac: src/main.cc
+	$(CXX) $(CXXFLAGS) -march=native -c src/main.cc
 	$(CXX) $(CXXFLAGS) -march=native -oprog.elf main.o
 	objdump -d -r main.o > dump.as
 	rm main.o
