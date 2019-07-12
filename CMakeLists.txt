@@ -3,9 +3,9 @@ cmake_minimum_required(VERSION 3.8.0)
 project(fluids CXX)
 
 set(_REAL double)
-set(_L 8)
-set(_W 8)
-set(_H 8)
+set(_L 5)
+set(_W 5)
+set(_H 5)
 
 set(CMAKE_CXX_FLAGS "-O3 -Wall -std=c++17")
 SET(CMAKE_CXX_COMPILER "g++")
