@@ -20,8 +20,8 @@ std::ostream& operator<<(std::ostream& os, const state<T, rank, buff, L, W, H>& 
     for(u_int y = 0; y < W; ++y){
       os << std::endl << "    [ ";
       for(u_int x = 0; x < L; ++x){
-        if constexpr (rank == 1){
-          os << clearZero(gr.data[S::I(0, x, y, z)]);
+        if constexpr (/*rank == 1*/ 1){
+          os << clearZero(gr.data[S::I(0, x, y, z)]) << " , ";
         } else{
           os << "< ";
           for(int i = 0; i < rank; ++i){

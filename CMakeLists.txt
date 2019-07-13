@@ -7,7 +7,7 @@ set(_L 5)
 set(_W 5)
 set(_H 5)
 
-set(CMAKE_CXX_FLAGS "-O3 -Wall -std=c++17")
+set(CMAKE_CXX_FLAGS "-O3 -Wall -std=c++17 -march=native")
 SET(CMAKE_CXX_COMPILER "g++")
 
 configure_file("src/build_options.h.in" "include/build_options.h")
