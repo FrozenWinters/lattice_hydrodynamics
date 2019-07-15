@@ -8,7 +8,7 @@ set(_W 200)
 set(_H 200)
 
 set(CMAKE_CXX_FLAGS "-O3 -Wall -std=c++17 -xMIC-AVX512")
-SET(CMAKE_CXX_COMPILER "icpc")
+SET(CMAKE_CXX_COMPILER "mpicxx")
 
 configure_file("src/build_options.h.in" "include/build_options.h")
 
@@ -17,8 +17,6 @@ include_directories("${CMAKE_BINARY_DIR}/include" "${PROJECT_SOURCE_DIR}/../xten
 add_executable(prog.elf ${PROJECT_SOURCE_DIR}/src/main.cc)
 
 add_custom_command(TARGET prog.elf POST_BUILD
-  COMMAND time prog.elf
+  COMMAND time ibrun prog.elf
   COMMENT "Running timed test:"
 )
-
-

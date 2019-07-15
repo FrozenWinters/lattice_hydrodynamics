@@ -1,6 +1,7 @@
 #include "algebra.hpp"
 #include "xalgebra.hpp"
 #include <build_options.h>
+#include <mpi.h>
 
 using namespace std;
 
@@ -33,10 +34,18 @@ void fill_mat(xt::xtensor_fixed<T, xt::xshape<3, L, W, H>>& dest)
   dest = xt::stack(xt::xtuple(X, Y, Z));
 }*/
 
-int main(){
+int main(int argc, char* argv[]){
+  MPI_Init(&argc, &argv);
+
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  cout << "My rank is: " << rank << endl;
+
 
   my_tensor Y;
   Y.fillTG();
+
+  MPI_Finalize();
   //cout << Y << endl;
 
   //tensor& V = *(new tensor());
