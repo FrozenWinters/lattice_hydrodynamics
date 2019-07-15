@@ -28,7 +28,7 @@ namespace distrubuted{
     MPI_Comm_rank(cartcomm, &rank);
     MPI_Cart_coords(cartcomm, rank, 3, cord);
 
-    cout << "My co-ordinates are: " << cord[0] << " , " << cord[1] << " , " << cord[2] << endl;
+    std::cout << "My co-ordinates are: " << cord[0] << " , " << cord[1] << " , " << cord[2] << std::endl;
   }
 
   inline void domainDecompose(Real begin[3], Real end [3], const int cord[3]){
