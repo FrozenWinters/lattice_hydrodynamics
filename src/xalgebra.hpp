@@ -16,13 +16,14 @@ namespace algebra{
 
   template<typename T, size_t L, size_t W, size_t H>
   class xfield{
+    using array_t = std::array<T, 3>;
     using self_t = xfield<T, L, W, H>;
     using shape_t = xshape<3, L, W, H>;
     using storage_shape_t = xshape<3, L+4, W+4, H+4>;
     using storage_t = xtensor_fixed<T, storage_shape_t>;
 
   public:
-    void fillTG(const T start[3], const T end[3]);
+    void fillTG(const array_t& start, const array_t& end);
 
   private:
     friend std::ostream & operator<<(std::ostream &os, const self_t& arg)
@@ -35,7 +36,7 @@ namespace algebra{
   };
 
   template<typename T, size_t L, size_t W, size_t H>
-  void xfield<T, L, W, H>::fillTG(const T start[3], const T end[3]){
+  void xfield<T, L, W, H>::fillTG(const array_t& start, const array_t& end){
     using std::get;
 
     static const T pi = acos(-1);

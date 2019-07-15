@@ -7,15 +7,15 @@ using my_tensor = algebra::xfield<Real, config.L, config.W, config.H>;
 
 int main(int argc, char* argv[]){
   MPI_Comm cartcomm;
-  int cord[3];
-  distrubuted::setup_MPI(&argc, &argv, cord, cartcomm);
+  Ind cord;
+  distributed::setupMPI(&argc, &argv, cord, cartcomm);
 
-  Real begin[3], end[3];
-  distrubuted::domainDecompose(begin, end);
+  Vect start = distributed::domainStart(cord);
+  Vect stop = distributed::domainStop(cord);
 
   my_tensor Y;
   Y.fillTG(start, stop);
-  //cout << Y << endl;
+  //std::cout << Y << std::endl;
 
   //tensor& V = *(new tensor());
   //V.fillTG();
