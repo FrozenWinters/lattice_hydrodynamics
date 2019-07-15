@@ -10,8 +10,8 @@ int main(int argc, char* argv[]){
   int cord[3];
   distrubuted::setup_MPI(&argc, &argv, cord, cartcomm);
 
-  Real start[3], stop[3];
-  distrubuted::domainDecompose(start, stop);
+  Real begin[3], end[3];
+  distrubuted::domainDecompose(begin, end);
 
   my_tensor Y;
   Y.fillTG(start, stop);

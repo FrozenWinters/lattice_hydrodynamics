@@ -1,11 +1,12 @@
 #include <mpi.h>
 #include <cstdlib>
 #include <build_options.h>
+#include <iostream>
 
 using Real = typename BuildOptions::real;
 
 namespace distrubuted{
-  constexpr static size_t N = config.DOMAIN_N;
+  constexpr static size_t N = config.DOMAIN_SCALE;
 
   inline void setupMPI(int* argc, char** argv[], int cord[], MPI_Comm& cartcomm){
     constexpr static size_t numproc = N * N * N;
@@ -19,7 +20,7 @@ namespace distrubuted{
     MPI_Comm_size(MPI_COMM_WORLD, &runtime_numproc);
 
     if(runtime_numproc != numproc){
-      cout << "ERROR: Expecting " << numproc << " processes, but getting " << runtime_numproc << ". Goodbye!" << endl;
+      std::cout << "ERROR: Expecting " << numproc << " processes, but getting " << runtime_numproc << ". Goodbye!" << std::endl;
       _Exit(EXIT_FAILURE);
     }
 
@@ -31,7 +32,7 @@ namespace distrubuted{
   }
 
   inline void domainDecompose(Real begin[3], Real end [3], const int cord[3]){
-    start = {((Real) cord[0]) / N, ((Real) cord[1]) / N, ((Real) cord[2]) / N};
-    stop = {((Real) cord[0] + 1) / N, ((Real) cord[1] + 1) / N, ((Real) cord[2] + 1) / N};
+    begin = {((Real) cord[0]) / N, ((Real) cord[1]) / N, ((Real) cord[2]) / N};
+    end = {((Real) cord[0] + 1) / N, ((Real) cord[1] + 1) / N, ((Real) cord[2] + 1) / N};
   }
 }
