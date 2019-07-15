@@ -37,12 +37,12 @@ int main(){
 
   my_tensor Y;
   Y.fillTG();
-  cout << Y << endl;
+  //cout << Y << endl;
 
-  tensor& V = *(new tensor());
-  V.fillTG();
-  cout << "Taylor-Green Vortex:" << endl;
-  cout << V;
+  //tensor& V = *(new tensor());
+  //V.fillTG();
+  //cout << "Taylor-Green Vortex:" << endl;
+  //cout << V;
 
 
   //mat A = xt::random::rand<double>(my_shape());

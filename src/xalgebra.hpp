@@ -4,6 +4,7 @@
 #include "xtensor/xio.hpp"
 #include "xtensor/xview.hpp"
 #include "xtensor/xarray.hpp"
+#include "xtensor/xnoalias.hpp"
 
 using std::get;
 using namespace xt;
@@ -50,5 +51,5 @@ void xfield<T, L, W, H>::fillTG(){
 
   auto data_view = view(data, all(), range(2, L + 2), range(2, W + 2), range(2, H + 2));
 
-  data_view = stack(xtuple(X, Y, Z));
+  noalias(data_view) = stack(xtuple(X, Y, Z));
 }

@@ -20,7 +20,7 @@ std::ostream& operator<<(std::ostream& os, const state<T, rank, buff, L, W, H>& 
     for(u_int y = 0; y < W; ++y){
       os << std::endl << "    [ ";
       for(u_int x = 0; x < L; ++x){
-        if constexpr (/*rank == 1*/ 1){
+        if (/*rank == 1*/ 1){
           os << clearZero(gr.data[S::I(0, x, y, z)]) << " , ";
         } else{
           os << "< ";
@@ -74,7 +74,7 @@ private:
   static constexpr size_t Hb = H + 2 * buff;
 
   static inline int I(int A, int x, int y, int z) {
-    if constexpr (buff != 0){
+    if(buff != 0){
       const size_t xb = x + buff;
       const size_t yb = y + buff;
       const size_t zb = z + buff;
