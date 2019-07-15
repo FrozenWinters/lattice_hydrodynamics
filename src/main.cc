@@ -2,6 +2,7 @@
 #include "xalgebra.hpp"
 #include <build_options.h>
 #include <mpi.h>
+#include <cstdlib>
 
 using namespace std;
 
@@ -35,17 +36,23 @@ void fill_mat(xt::xtensor_fixed<T, xt::xshape<3, L, W, H>>& dest)
 }*/
 
 int main(int argc, char* argv[]){
+  constexpr size_t task_count = 9;
+
   MPI_Init(&argc, &argv);
 
-  int rank;
+  int rank, numproc;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  cout << "My rank is: " << rank << endl;
+  MPI_Comm_size(MPI_COMM_WORLD, &numproc);
+  cout << "My rank is: " << rank << " of " << numproc << endl;
 
+  if(numproc != 9){
+    cout << "ERROR: Expecting " << task_count << " processes, but getting " << numproc << ". Goodbye!" << endl;
+    _Exit(EXIT_FAILURE);
+  }
 
   my_tensor Y;
   Y.fillTG();
 
-  MPI_Finalize();
   //cout << Y << endl;
 
   //tensor& V = *(new tensor());
@@ -53,6 +60,7 @@ int main(int argc, char* argv[]){
   //cout << "Taylor-Green Vortex:" << endl;
   //cout << V;
 
+  MPI_Finalize();
 
   //mat A = xt::random::rand<double>(my_shape());
   /*size_t SIDE = 5;
