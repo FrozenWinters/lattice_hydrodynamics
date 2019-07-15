@@ -8,95 +8,49 @@ using namespace std;
 
 using tensor = state<typename BuildOptions::real, 3, 0, config.L, config.W, config.H>;
 using my_tensor = xfield<typename BuildOptions::real, config.L, config.W, config.H>;
-//using scalar = state<typename BuildOptions::real, 1, 0, config.L, config.W, config.H>;
 
-/*using my_shape = xt::xshape<3, config.L, config.W, config.H>;
-using mat = xt::xtensor_fixed<double, my_shape>;*/
+inline void setup_MPI(const int& argc, const char* &argv[], MPI_Comm& cartcomm){
+  constexpr static size_t N = config.DOMAIN_SCALE;
+  constexpr static size_t numproc = N * N * N;
+  constexpr static int ndims[3] = {N, N, N};
+  constexpr static int periods[3] = {1, 1, 1};
 
-/*void __attribute__((noinline)) computeN(const field& in, field& out){
-  in.computeN(out);
-}*/
-
-/*template<typename T, size_t L, size_t W, size_t H>
-void fill_mat(xt::xtensor_fixed<T, xt::xshape<3, L, W, H>>& dest)
-{
-  static const T pi = acos(-1);
-
-  auto x_space = xt::linspace<T>(pi / L, 2 * pi - pi / L, L);
-  auto y_space = xt::linspace<T>(pi / W, 2 * pi - pi / W, W);
-  auto z_space = xt::linspace<T>(pi / H, 2 * pi - pi / H, H);
-
-  auto mesh = xt::meshgrid(z_space, y_space, x_space);
-
-  auto X = xt::cos(get<2>(mesh)) * xt::sin(get<1>(mesh)) * xt::sin(get<0>(mesh));
-  auto Y = -0.5 * xt::cos(get<1>(mesh)) * xt::sin(get<0>(mesh)) * xt::sin(get<2>(mesh));
-  auto Z = -0.5 * xt::cos(get<0>(mesh)) * xt::sin(get<2>(mesh)) * xt::sin(get<1>(mesh));
-
-  dest = xt::stack(xt::xtuple(X, Y, Z));
-}*/
-
-int main(int argc, char* argv[]){
-  constexpr size_t task_count = 9;
+  int rank, runtime_numproc;
+  int coords[3];
 
   MPI_Init(&argc, &argv);
 
-  int rank, numproc;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &numproc);
-  cout << "My rank is: " << rank << " of " << numproc << endl;
+  MPI_Comm_size(MPI_COMM_WORLD, &runtime_numproc);
 
-  if(numproc != 9){
-    cout << "ERROR: Expecting " << task_count << " processes, but getting " << numproc << ". Goodbye!" << endl;
+  if(runtime_numproc != numproc){
+    cout << "ERROR: Expecting " << numproc << " processes, but getting " << runtime_numproc << ". Goodbye!" << endl;
     _Exit(EXIT_FAILURE);
   }
 
+  MPI_Cart_create(MPI_COMM_WORLD, 3, ndims, periods, 0, &cartcomm);
+
+  cout << "My regular rank is: " << rank << " of " << numproc << endl;
+
+  MPI_Comm_rank(cartcomm, &rank);
+
+  cout << "My cartesian rank is: " << rank << endl;
+  MPI_Cart_coords(cartcomm, rank, 3, coords);
+
+  cout << "My co-ordinates are: " << coords[0] << " , " << coords[1] << " , " << coords[2] << endl;
+}
+
+int main(int argc, char* argv[]){
+  MPI_Comm cartcomm;
+  setup_MPI(argc, argv, cartcomm);
+
   my_tensor Y;
   Y.fillTG();
-
   //cout << Y << endl;
 
   //tensor& V = *(new tensor());
   //V.fillTG();
-  //cout << "Taylor-Green Vortex:" << endl;
   //cout << V;
 
   MPI_Finalize();
-
-  //mat A = xt::random::rand<double>(my_shape());
-  /*size_t SIDE = 5;
-  auto spacing = xt::linspace<double>(pi / SIDE, 2 * pi - pi / SIDE, SIDE);
-  auto mesh = xt::meshgrid(spacing, spacing, spacing);
-  auto X = xt::cos(get<2>(mesh)) * xt::sin(get<1>(mesh)) * xt::sin(get<0>(mesh));*/
-  //cout << get<2>(mesh) << endl;
-  //cout << A << endl;
-  /*tensor& L = *(new tensor());
-  tensor& N = *(new tensor());
-  tensor& V2 = *(new tensor());
-
-  V.fillTG();
-  cout << "Taylor-Green Vortex:" << endl;
-  cout << V;
-
-  V.vectLap(L);
-  cout << "Laplacian:" << endl;
-  cout << L;
-
-  V.dVfvf(N);
-  cout << "Non-linear term:" << endl;
-  cout << N;
-
-  N.scale(-1, N);
-  L.scale(0.2, L);
-  N.sum(L, V2);
-  cout << "V2:" << endl;
-  cout << V2;*/
-
-  /*field& N = *(new field());
-  for(u_int i = 0; i < 40; i++){
-    N = {};
-    computeN(V, N);
-  }
-
-  cout << "Matrix N:" << endl;
-  cout << N;*/
 }

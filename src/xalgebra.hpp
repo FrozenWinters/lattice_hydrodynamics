@@ -23,7 +23,7 @@ class xfield{
   using storage_t = xtensor_fixed<T, storage_shape_t>;
 
 public:
-  void fillTG();
+  void fillTG(const T&, const T&, const T&, const T&, const T&, const T&);
 
 private:
   friend std::ostream & operator<<(std::ostream &os, const self_t& arg)
@@ -36,12 +36,12 @@ private:
 };
 
 template<typename T, size_t L, size_t W, size_t H>
-void xfield<T, L, W, H>::fillTG(){
+void xfield<T, L, W, H>::fillTG(const T& x_0, const T& x_1, const T& y_0, const T& y_1, const T& z_0, const T& z_1)
   static const T pi = acos(-1);
 
-  auto x_space = linspace<T>(pi / L, 2 * pi - pi / L, L);
-  auto y_space = linspace<T>(pi / W, 2 * pi - pi / W, W);
-  auto z_space = linspace<T>(pi / H, 2 * pi - pi / H, H);
+  auto x_space = linspace<T>(x_0 * (pi / L), x_1 * (2 * pi - pi / L), L);
+  auto y_space = linspace<T>(y_0 * (pi / W), y_1 * (2 * pi - pi / W), W);
+  auto z_space = linspace<T>(z_0 * (pi / H), z_1 * (2 * pi - pi / H), H);
 
   auto mesh = meshgrid(z_space, y_space, x_space);
 

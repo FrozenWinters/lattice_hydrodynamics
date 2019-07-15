@@ -4,11 +4,13 @@
 #cmakedefine _L @_L@
 #cmakedefine _W @_W@
 #cmakedefine _H @_H@
+#cmakedefine _DOMAIN_SCALE @_DOMAIN_SCALE@
 
 struct BuildOptions {
   using real = _REAL;
   constexpr static size_t L = _L;
   constexpr static size_t W = _W;
   constexpr static size_t H = _H;
+  constexpr static size_t DOMAIN_SCALE = _DOMAIN_SCALE;
 };
 inline constexpr BuildOptions config;

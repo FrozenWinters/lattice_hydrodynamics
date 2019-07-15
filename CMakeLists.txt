@@ -6,6 +6,7 @@ set(_REAL double)
 set(_L 200)
 set(_W 200)
 set(_H 200)
+set(_DOMAIN_SCALE 4)
 
 set(CMAKE_CXX_FLAGS "-O3 -Wall -std=c++17 -xMIC-AVX512")
 SET(CMAKE_CXX_COMPILER "mpicxx")
