@@ -36,7 +36,7 @@ private:
 };
 
 template<typename T, size_t L, size_t W, size_t H>
-void xfield<T, L, W, H>::fillTG(const T& x_0, const T& x_1, const T& y_0, const T& y_1, const T& z_0, const T& z_1)
+void xfield<T, L, W, H>::fillTG(const T& x_0, const T& x_1, const T& y_0, const T& y_1, const T& z_0, const T& z_1){
   static const T pi = acos(-1);
 
   auto x_space = linspace<T>(x_0 * (pi / L), x_1 * (2 * pi - pi / L), L);
