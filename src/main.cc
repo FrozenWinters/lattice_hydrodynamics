@@ -5,7 +5,7 @@
 
 using Real = typename BuildOptions::real;
 using tensor = state<Real, 3, 0, config.L, config.W, config.H>;
-using my_tensor = algebra::xfield<Real, config.L, config.W, config.H>;
+using my_tensor = algebra::xfield<Real, 2, config.L, config.W, config.H>;
 using Vect = std::array<Real, 3>;
 using Ind = std::array<int, 3>;
 
@@ -22,18 +22,14 @@ int main(int argc, char* argv[]){
 
   my_tensor Y;
   Y.fillTG(start, stop);
-  std::cout << Y << std::endl;
+  //std::cout << Y << std::endl;
 
-  Y.fillBoundaryBuffer(0, 1, buffer);
+  Y.exportBuffer(0, 1, buffer);
+  Y.importBuffer(0, -1, buffer);
 
-  for(int i = 0; i < 6 * config.L * config.L; ++i){
-    std::cout << buffer[i] << " ";
-  }
-  std::cout << std::endl;
-
-  tensor& V = *(new tensor());
+  /*tensor& V = *(new tensor());
   V.fillTG();
-  std::cout << V;
+  std::cout << V;*/
 
   //MPI_Finalize();
 }
