@@ -23,6 +23,7 @@ namespace algebra{
     using shape_t = xshape<NDIMS, XS...>;
     using storage_shape_t = xshape<NDIMS, (XS + 2 * buff_len)...>;
     using storage_t = xtensor_fixed<T, storage_shape_t>;
+    using result_t = xtensor_fixed<T, shape_t>;
 
   public:
     void fillTG(const array_t& start, const array_t& end);
@@ -31,7 +32,42 @@ namespace algebra{
 
     void exportBuffer(const size_t &axis, const int &dir,T* buff);
 
+    void test();
+
+    void dVdt() {
+
+    }
+
   private:
+
+    static constexpr size_t h = 2;
+
+    template<size_t... IS>
+    auto offset_view_impl(const size_t &axis, const int &val, const std::index_sequence<IS...>&);
+
+    auto offset_view(const size_t &axis, const int &val);
+
+    // template<size_t... IS>
+    // auto offset_view_impl(const size_t &axis, const int &val, const std::index_sequence<IS...>&);
+
+    auto partial1(const size_t &axis){
+       return (offset_view(axis, 1) - offset_view(axis, -1)) / (2 * h);
+    }
+    auto partial2(const size_t &axis){
+      return (offset_view(axis, -2) - 2*offset_view(axis, 0) - offset_view(axis, -1)) / (4 * h * h);
+    }
+
+
+    template<size_t... IS>
+    auto grad_impl(const std::index_sequence<IS...>&){
+      return partial1(IS...);
+    }
+
+    auto grad(){
+      return stack(xtuple(grad_impl(std::make_index_sequence<NDIMS>())));
+    }
+
+
     template<size_t... IS>
     void fillTG_impl(const array_t& start, const array_t& end, const std::index_sequence<IS...>&);
 
@@ -41,11 +77,16 @@ namespace algebra{
     template<size_t... IS>
     void exportBuffer_impl(const size_t &axis, const int &dir, T* buff, const std::index_sequence<IS...>&);
 
-    friend std::ostream & operator<<(std::ostream &os, const self_t& arg)
-    {
+    friend std::ostream & operator<<(std::ostream &os, const self_t& arg){
       auto data_view = view(arg.data, all(), range(buff_len, XS + buff_len)...);
       return os << data_view;
     }
+
+
+    // void printX(){
+    //   auto data_view = view(arg.data, range(0, 0), range(buff_len, XS + buff_len)...);
+    //   return std::cout << data_view << std::endl << std::endl;
+    // }
 
     storage_t data;
   };
@@ -55,6 +96,72 @@ namespace algebra{
     size_t drop_prod(const size_t &axis, const std::index_sequence<IS...>&){
       return (((IS == axis) ? 1 : XS) * ...);
     }
+  }
+
+
+  template<typename T, size_t buff_len, size_t... XS>
+  void xfield<T, buff_len, XS...>::test(){
+
+      // data =
+
+      T buffer[(int) 1e6];
+
+
+
+      // dVdt();
+      data *= 0;
+      data += 1337;
+
+
+      int val = 0;
+      view(data, 0, range(buff_len+1, buff_len+2), range(buff_len+1, buff_len+2), range(buff_len+1, buff_len+2)) = val++;
+      view(data, 0, range(buff_len, buff_len+1), range(buff_len+1, buff_len+2), range(buff_len+1, buff_len+2)) = val++;
+      view(data, 0, range(buff_len+2, buff_len+3), range(buff_len+1, buff_len+2), range(buff_len+1, buff_len+2)) = val++;
+      view(data, 0, range(buff_len+1, buff_len+2), range(buff_len, buff_len+1), range(buff_len+1, buff_len+2)) = val++;
+      view(data, 0, range(buff_len+1, buff_len+2), range(buff_len+2, buff_len+3), range(buff_len+1, buff_len+2)) = val++;
+
+      std::cout << view(data, 0) << std::endl << std::endl;
+
+
+      for (size_t i = 0; i < NDIMS; i++) {
+        for (auto j: {-1, 1}) {
+          exportBuffer(0, +j, buffer);
+          importBuffer(0, -j, buffer);
+
+
+          std::cout << view(data, 0) << std::endl << std::endl;
+
+
+          view(data, 0, range(buff_len, buff_len+3), range(buff_len, buff_len+3)) +=10;
+        }
+      }
+
+
+      std::cout << view(data, range(0, 1), all(), all()) << std::endl << std::endl;
+      std::cout << offset_view(1, 00)[{1,2,3}] << std::endl << std::endl;
+      std::cout << view(offset_view(1, -1), range(0, 1), all(), all()) << std::endl << std::endl;
+      std::cout << view(offset_view(1, +1), range(0, 1), all(), all()) << std::endl << std::endl;
+
+
+      // std::cout << offset_view(0, -2) << std::endl << std::endl;
+      // std::cout << offset_view(0, 2) << std::endl << std::endl
+      // std::cout << offset_view(0, 0) << std::endl << std::endl;
+  }
+
+  template<typename T, size_t buff_len, size_t... XS>
+  template<size_t... IS>
+  auto xfield<T, buff_len, XS...>::offset_view_impl(const size_t &axis, const int &val, const std::index_sequence<IS...>&){
+    return view(data, all(),
+      range(
+        ((IS != axis) ? buff_len : buff_len + val),
+        ((IS != axis) ? (buff_len + XS) : (buff_len + XS + val))
+      )...
+    );
+  }
+
+  template<typename T, size_t buff_len, size_t... XS>
+  auto xfield<T, buff_len, XS...>::offset_view(const size_t &axis, const int &val){
+    return offset_view_impl(axis, val, std::make_index_sequence<sizeof...(XS)>());
   }
 
   template<typename T, size_t buff_len, size_t... XS>
@@ -106,19 +213,21 @@ namespace algebra{
   template<typename T, size_t buff_len, size_t... XS>
   template<size_t... IS>
   void xfield<T, buff_len, XS...>::fillTG_impl(const array_t& start, const array_t& end, const std::index_sequence<IS...>&){
+
     using std::get;
     static const T pi = acos(-1);
     const array_t len = {(end[IS] - start[IS])... };
 
     auto mesh = meshgrid(linspace<T>(pi * (2 * start[IS] + len[IS] / XS), pi * (2 * end[IS] - len[IS] / XS), XS)... );
 
-    auto X = cos(get<2>(mesh)) * sin(get<1>(mesh)) * sin(get<0>(mesh));
-    auto Y = -0.5 * cos(get<1>(mesh)) * sin(get<0>(mesh)) * sin(get<2>(mesh));
-    auto Z = -0.5 * cos(get<0>(mesh)) * sin(get<2>(mesh)) * sin(get<1>(mesh));
+    constexpr int a = 0;
+    auto X = cos(get<a>(mesh)) * sin(get<1>(mesh)) * sin(get<0>(mesh));
+    auto Y = -0.5 * cos(get<1>(mesh)) * sin(get<0>(mesh)) * sin(get<a>(mesh));
+    auto Z = -0.5 * cos(get<0>(mesh)) * sin(get<a>(mesh)) * sin(get<1>(mesh));
 
     auto data_view = view(data, all(), range(buff_len, XS + buff_len)... );
 
-    noalias(data_view) = stack(xtuple(X, Y, Z));
+    noalias(data_view) = stack(xtuple(X, Y));
   }
 
 

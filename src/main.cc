@@ -5,9 +5,9 @@
 
 using Real = typename BuildOptions::real;
 using tensor = state<Real, 3, 0, config.L, config.W, config.H>;
-using my_tensor = algebra::xfield<Real, 2, config.L, config.W, config.H>;
-using Vect = std::array<Real, 3>;
-using Ind = std::array<int, 3>;
+using my_tensor = algebra::xfield<Real, 2, config.L, config.W>;//, config.H>;
+using Vect = std::array<Real, 2>;
+using Ind = std::array<int, 2>;
 
 int main(int argc, char* argv[]){
   //distributed::Communicator comm(&argc, &argv);
@@ -15,17 +15,16 @@ int main(int argc, char* argv[]){
   //Vect start = distributed::domainStart(comm.cord);
   //Vect stop = distributed::domainStop(comm.cord);
 
-  Vect start = {0.0, 0.0, 0.0};
-  Vect stop = {1.0, 1.0, 1.0};
+  // Vect start = {0.0, 0.0};//, 0.0};
+  // Vect stop = {1.0, 1.0};//, 1.0};
 
-  Real buffer[6 * config.L * config.L];
 
   my_tensor Y;
-  Y.fillTG(start, stop);
+  // Y.fillTG(start, stop);
   //std::cout << Y << std::endl;
 
-  Y.exportBuffer(0, 1, buffer);
-  Y.importBuffer(0, -1, buffer);
+
+  Y.test();
 
   /*tensor& V = *(new tensor());
   V.fillTG();
