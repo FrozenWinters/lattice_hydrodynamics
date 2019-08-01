@@ -34,13 +34,9 @@ namespace algebra{
 
     void test();
 
-    void dVdt() {
-
-    }
-
   private:
 
-    static constexpr size_t h = 2;
+    static constexpr size_t h = 1;
 
     template<size_t... IS>
     auto offset_view_impl(const size_t &axis, const int &val, const std::index_sequence<IS...>&);
@@ -53,6 +49,9 @@ namespace algebra{
     auto partial1(const size_t &axis){
        return (offset_view(axis, 1) - offset_view(axis, -1)) / (2 * h);
     }
+    auto partial1(const size_t &axis, const size_t &var){
+       return view(offset_view(axis, 1) - offset_view(axis, -1), var) / (2 * h);
+    }
     auto partial2(const size_t &axis){
       return (offset_view(axis, -2) - 2*offset_view(axis, 0) - offset_view(axis, -1)) / (4 * h * h);
     }
@@ -60,12 +59,40 @@ namespace algebra{
 
     template<size_t... IS>
     auto grad_impl(const std::index_sequence<IS...>&){
-      return partial1(IS...);
+      return stack(xtuple(partial1(IS)...));
     }
 
     auto grad(){
-      return stack(xtuple(grad_impl(std::make_index_sequence<NDIMS>())));
+      return grad_impl(std::make_index_sequence<NDIMS>());
     }
+
+    template<size_t... IS>
+    auto div_impl(const std::index_sequence<IS...>&){
+      return (partial1(IS, IS) + ...);
+    }
+
+    auto div(){
+      return div_impl(std::make_index_sequence<NDIMS>());
+    }
+
+    auto curl(){
+      // assert(NDIMS == 3)
+      return stack(xtuple(
+        partial1(1, 2) - partial1(2, 1),
+        partial1(2, 0) - partial1(0, 2),
+        partial1(0, 1) - partial1(1, 0)
+      ));
+    }
+
+    template<size_t... IS>
+    auto laplace_impl(const std::index_sequence<IS...>&){
+      return (partial2(IS) + ...);
+    }
+
+    auto laplace(){
+      return laplace_impl(std::make_index_sequence<NDIMS>());
+    }
+
 
 
     template<size_t... IS>
@@ -125,8 +152,8 @@ namespace algebra{
 
       for (size_t i = 0; i < NDIMS; i++) {
         for (auto j: {-1, 1}) {
-          exportBuffer(0, +j, buffer);
-          importBuffer(0, -j, buffer);
+          exportBuffer(i, +j, buffer);
+          importBuffer(i, -j, buffer);
 
 
           std::cout << view(data, 0) << std::endl << std::endl;
@@ -142,7 +169,11 @@ namespace algebra{
       std::cout << view(offset_view(1, -1), range(0, 1), all(), all()) << std::endl << std::endl;
       std::cout << view(offset_view(1, +1), range(0, 1), all(), all()) << std::endl << std::endl;
 
-
+      std::cout << "d/dx:\n" << partial1(0) << std::endl << std::endl;
+      std::cout << "d/dy:\n" << partial1(1) << std::endl << std::endl;
+      std::cout << "div:\n" << div() << std::endl << std::endl;
+      std::cout << "grad:\n" << grad() << std::endl << std::endl;
+      std::cout << "laplace:\n" << laplace() << std::endl << std::endl;
       // std::cout << offset_view(0, -2) << std::endl << std::endl;
       // std::cout << offset_view(0, 2) << std::endl << std::endl
       // std::cout << offset_view(0, 0) << std::endl << std::endl;
@@ -195,11 +226,16 @@ namespace algebra{
     auto buffer_view = adapt(buff, buffer_size, no_ownership(),
       std::array<size_t, NDIMS + 1>({NDIMS, ((IS == axis) ? buff_len : XS)... })
     );
+    std::cout << axis << std::endl;
     auto data_view = view(data, all(),
       range(
         (IS != axis) ? buff_len : ((dir == 1) ? (XS + buff_len) : 0),
         (IS != axis) ? (XS + buff_len) : ((dir == 1) ? (XS + 2 * buff_len) : buff_len)
       )...
+      // ((IS != axis)
+      //     ? range(buff_len, buff_len + XS)
+      //     : (dir == 11 ? range(XS + buff_len, XS + 2*buff_len) : range(0, buff_len))
+      // )...
     );
 
     noalias(data_view) = buffer_view;
@@ -220,14 +256,13 @@ namespace algebra{
 
     auto mesh = meshgrid(linspace<T>(pi * (2 * start[IS] + len[IS] / XS), pi * (2 * end[IS] - len[IS] / XS), XS)... );
 
-    constexpr int a = 0;
-    auto X = cos(get<a>(mesh)) * sin(get<1>(mesh)) * sin(get<0>(mesh));
-    auto Y = -0.5 * cos(get<1>(mesh)) * sin(get<0>(mesh)) * sin(get<a>(mesh));
-    auto Z = -0.5 * cos(get<0>(mesh)) * sin(get<a>(mesh)) * sin(get<1>(mesh));
+    auto X = cos(get<2>(mesh)) * sin(get<1>(mesh)) * sin(get<0>(mesh));
+    auto Y = -0.5 * cos(get<1>(mesh)) * sin(get<0>(mesh)) * sin(get<2>(mesh));
+    auto Z = -0.5 * cos(get<0>(mesh)) * sin(get<2>(mesh)) * sin(get<1>(mesh));
 
     auto data_view = view(data, all(), range(buff_len, XS + buff_len)... );
 
-    noalias(data_view) = stack(xtuple(X, Y));
+    noalias(data_view) = stack(xtuple(X, Y, Z));
   }
 
 

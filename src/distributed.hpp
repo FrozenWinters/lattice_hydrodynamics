@@ -12,6 +12,7 @@ namespace distributed{
 
   struct Communicator{
     Communicator(int* argc, char** argv[]);
+    ~Communicator();
 
     MPI_Comm cartcomm;
     Ind cord;
@@ -47,6 +48,10 @@ namespace distributed{
     }
 
     std::cout << "My co-ordinates are: " << cord[0] << " , " << cord[1] << " , " << cord[2] << std::endl;
+  }
+
+  inline Communicator::~Communicator(){
+    MPI_Finalize();
   }
 
   inline Vect domainStart(const Ind& cord){
