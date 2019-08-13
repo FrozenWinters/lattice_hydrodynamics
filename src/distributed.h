@@ -3,6 +3,7 @@
 
 #include <mpi.h>
 #include <build_options.h>
+#include <array>
 
 namespace distributed{
   class Communicator{

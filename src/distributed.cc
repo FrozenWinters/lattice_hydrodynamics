@@ -37,11 +37,11 @@ namespace distributed{
     MPI_Finalize();
   }
 
-  Vect Communicator::domainStart(){
+  auto Communicator::domainStart() -> Vect{
     return {((Real) cord[0]) / N, ((Real) cord[1]) / N, ((Real) cord[2]) / N};
   }
 
-  Vect Communicator::domainStop(){
+  auto Communicator::domainStop() -> Vect{
     return {((Real) cord[0]) / N, ((Real) cord[1]) / N, ((Real) cord[2]) / N};
   }
 

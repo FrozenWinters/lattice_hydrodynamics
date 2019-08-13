@@ -41,6 +41,19 @@ namespace algebra{
 
   private:
 
+    template<size_t... IS>
+    void fillTG_impl(const array_t& start, const array_t& end, const std::index_sequence<IS...>&);
+
+    template<size_t axis, int dir, size_t... IS>
+    void importBuffer_impl(T* buff, const std::index_sequence<IS...>&);
+
+    template<size_t axis, int dir, size_t... IS>
+    void exportBuffer_impl(T* buff, const std::index_sequence<IS...>&) const;
+
+    friend std::ostream& operator<<(std::ostream& os, const self_t& arg){
+      auto data_view = view(arg.data, all(), range(buff_len, XS + buff_len)...);
+      return os << data_view;
+    }
     static constexpr size_t h = 1;
 
     template<size_t... IS>
@@ -100,19 +113,6 @@ namespace algebra{
 
 
 
-    template<size_t... IS>
-    void fillTG_impl(const array_t& start, const array_t& end, const std::index_sequence<IS...>&);
-
-    template<size_t axis, int dir, size_t... IS>
-    void importBuffer_impl(T* buff, const std::index_sequence<IS...>&);
-
-    template<size_t axis, int dir, size_t... IS>
-    void exportBuffer_impl(T* buff, const std::index_sequence<IS...>&) const;
-
-    friend std::ostream& operator<<(std::ostream& os, const self_t& arg){
-      auto data_view = view(arg.data, all(), range(buff_len, XS + buff_len)...);
-      return os << data_view;
-    }
 
     storage_t data;
   };
@@ -134,7 +134,7 @@ namespace algebra{
 
   template<typename T, size_t buff_len, size_t... XS>
   template<size_t axis>
-  static constexpr size_t xfield<T, buff_len, XS...>::bufferSize(){
+  constexpr size_t xfield<T, buff_len, XS...>::bufferSize(){
     return buff_len * NDIMS * meta::drop_prod<axis, XS...>::value;
   }
 
@@ -226,12 +226,12 @@ namespace algebra{
   template<typename T, size_t buff_len, size_t... XS>
   template<size_t axis, int dir>
   void xfield<T, buff_len, XS...>::exportBuffer(T* buff) const{
-    exportBuffer_impl(axis, dir, buff, std::make_index_sequence<sizeof...(XS)>());
+    exportBuffer_impl<axis, dir>(buff, std::make_index_sequence<sizeof...(XS)>());
   }
 
   template<typename T, size_t buff_len, size_t... XS>
   template<size_t axis, int dir, size_t... IS>
-  void xfield<T, buff_len, XS...>::importBuffer_impl(const size_t& axis, const int& dir, T* buff, const std::index_sequence<IS...>& seq){
+  void xfield<T, buff_len, XS...>::importBuffer_impl(T* buff, const std::index_sequence<IS...>& seq){
     auto buffer_view = adapt(buff, bufferSize<axis>(), no_ownership(),
       std::array<size_t, NDIMS + 1>({NDIMS, ((IS == axis) ? buff_len : XS)... })
     );
@@ -247,7 +247,7 @@ namespace algebra{
   template<typename T, size_t buff_len, size_t... XS>
   template<size_t axis, int dir>
   void xfield<T, buff_len, XS...>::importBuffer(T* buff){
-    importBuffer_impl(axis, dir, buff, std::make_index_sequence<sizeof...(XS)>());
+    importBuffer_impl<axis, dir>(buff, std::make_index_sequence<sizeof...(XS)>());
   }
 
   template<typename T, size_t buff_len, size_t... XS>

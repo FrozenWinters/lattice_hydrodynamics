@@ -6,6 +6,8 @@
 #cmakedefine _H @_H@
 #cmakedefine _DOMAIN_SCALE @_DOMAIN_SCALE@
 
+#include <stddef.h>
+
 struct BuildOptions {
   using real = _REAL;
   constexpr static size_t L = _L;

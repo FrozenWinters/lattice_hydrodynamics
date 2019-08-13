@@ -1,5 +1,5 @@
 #include <build_options.h>
-#include "comm.h"
+#include "comm.hpp"
 
 using my_tensor = algebra::xfield<typename BuildOptions::real, 2, config.L, config.W, config.H>;
 
