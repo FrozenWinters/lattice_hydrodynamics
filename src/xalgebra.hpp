@@ -44,20 +44,20 @@ namespace algebra{
     static constexpr size_t h = 1;
 
     template<size_t... IS>
-    auto offset_view_impl(const size_t &axis, const int &val, const std::index_sequence<IS...>&);
+    auto offset_view_impl(const size_t& axis, const int& val, const std::index_sequence<IS...>&);
 
-    auto offset_view(const size_t &axis, const int &val);
+    auto offset_view(const size_t& axis, const int& val);
 
     // template<size_t... IS>
-    // auto offset_view_impl(const size_t &axis, const int &val, const std::index_sequence<IS...>&);
+    // auto offset_view_impl(const size_t& axis, const int& val, const std::index_sequence<IS...>&);
 
-    auto partial1(const size_t &axis){
+    auto partial1(const size_t& axis){
        return (offset_view(axis, 1) - offset_view(axis, -1)) / (2 * h);
     }
-    auto partial1(const size_t &axis, const size_t &var){
+    auto partial1(const size_t& axis, const size_t& var){
        return view(offset_view(axis, 1) - offset_view(axis, -1), var) / (2 * h);
     }
-    auto partial2(const size_t &axis){
+    auto partial2(const size_t& axis){
       return (offset_view(axis, -2) - 2*offset_view(axis, 0) - offset_view(axis, -1)) / (4 * h * h);
     }
 
@@ -109,7 +109,7 @@ namespace algebra{
     template<size_t axis, int dir, size_t... IS>
     void exportBuffer_impl(T* buff, const std::index_sequence<IS...>&) const;
 
-    friend std::ostream & operator<<(std::ostream &os, const self_t& arg){
+    friend std::ostream& operator<<(std::ostream& os, const self_t& arg){
       auto data_view = view(arg.data, all(), range(buff_len, XS + buff_len)...);
       return os << data_view;
     }
@@ -128,9 +128,7 @@ namespace algebra{
 
     template<size_t axis, size_t... XS>
     struct drop_prod : drop_prod_impl<
-      axis,
-      decltype(std::make_index_sequence<sizeof...(XS)>()),
-      XS...
+      axis, decltype(std::make_index_sequence<sizeof...(XS)>()), XS...
     > {};
   }
 
@@ -196,7 +194,7 @@ namespace algebra{
 
   template<typename T, size_t buff_len, size_t... XS>
   template<size_t... IS>
-  auto xfield<T, buff_len, XS...>::offset_view_impl(const size_t &axis, const int &val, const std::index_sequence<IS...>&){
+  auto xfield<T, buff_len, XS...>::offset_view_impl(const size_t& axis, const int& val, const std::index_sequence<IS...>&){
     return view(data, all(),
       ((IS != axis)
         ? range(buff_len, buff_len + XS)
@@ -206,7 +204,7 @@ namespace algebra{
   }
 
   template<typename T, size_t buff_len, size_t... XS>
-  auto xfield<T, buff_len, XS...>::offset_view(const size_t &axis, const int &val){
+  auto xfield<T, buff_len, XS...>::offset_view(const size_t& axis, const int& val){
     return offset_view_impl(axis, val, std::make_index_sequence<sizeof...(XS)>());
   }
 
@@ -233,7 +231,7 @@ namespace algebra{
 
   template<typename T, size_t buff_len, size_t... XS>
   template<size_t axis, int dir, size_t... IS>
-  void xfield<T, buff_len, XS...>::importBuffer_impl(const size_t &axis, const int &dir, T* buff, const std::index_sequence<IS...>& seq){
+  void xfield<T, buff_len, XS...>::importBuffer_impl(const size_t& axis, const int& dir, T* buff, const std::index_sequence<IS...>& seq){
     auto buffer_view = adapt(buff, bufferSize<axis>(), no_ownership(),
       std::array<size_t, NDIMS + 1>({NDIMS, ((IS == axis) ? buff_len : XS)... })
     );
