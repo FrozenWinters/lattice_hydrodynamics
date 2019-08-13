@@ -121,9 +121,21 @@ namespace algebra{
     template<size_t axis, typename, size_t... XS>
     struct drop_prod_impl;
 
-    template<size_t axis, size_t... XS, size_t... IS>
+
+    // More concise implementation using folds, not supported on the intel v18 compiler
+    /*template<size_t axis, size_t... XS, size_t... IS>
     struct drop_prod_impl<axis, std::index_sequence<IS...>, XS...>{
         static constexpr size_t value = (((IS == axis) ? 1 : XS) * ...);
+    };*/
+
+    template<size_t axis>
+    struct drop_prod_impl<axis, std::index_sequence<>>{
+        static constexpr size_t value = 1;
+    };
+
+    template<size_t axis, size_t X, size_t... XS, size_t I, size_t... IS>
+    struct drop_prod_impl<axis, std::index_sequence<I, IS...>, X, XS...>{
+        static constexpr size_t value = ((I == axis) ? 1 : X) * drop_prod_impl<axis, std::index_sequence<IS...>, XS...>::value;
     };
 
     template<size_t axis, size_t... XS>

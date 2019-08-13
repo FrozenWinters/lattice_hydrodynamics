@@ -16,7 +16,7 @@ set(CMAKE_CXX_FLAGS "-O3 -Wall -std=c++17")
 
 configure_file("src/build_options.h.in" "include/build_options.h")
 
-#include_directories("${CMAKE_BINARY_DIR}/include" "${PROJECT_SOURCE_DIR}/../xtensor_build/include" "${PROJECT_SOURCE_DIR}/../xsimd/include" "${PROJECT_SOURCE_DIR}/../xtl_build/include")
+include_directories("${CMAKE_BINARY_DIR}/include" "${PROJECT_SOURCE_DIR}/../xtensor_build/include" "${PROJECT_SOURCE_DIR}/../xsimd/include" "${PROJECT_SOURCE_DIR}/../xtl_build/include")
 
 include_directories("${CMAKE_BINARY_DIR}/include")
 
