@@ -17,7 +17,7 @@ namespace algebra{
 
   template<typename T, size_t buff_len, size_t... XS>
   class xfield{
-    constexpr static size_t NDIMS = sizeof...(XS);
+    static constexpr size_t NDIMS = sizeof...(XS);
     using array_t = std::array<T, NDIMS>;
     using self_t = xfield<T, buff_len, XS...>;
     using shape_t = xshape<NDIMS, XS...>;
@@ -28,9 +28,14 @@ namespace algebra{
   public:
     void fillTG(const array_t& start, const array_t& end);
 
-    void importBuffer(const size_t &axis, const int &dir,T* buff);
+    template<size_t axis>
+    static constexpr size_t bufferSize();
 
-    void exportBuffer(const size_t &axis, const int &dir,T* buff);
+    template<size_t axis, int dir>
+    void importBuffer(T* buff);
+
+    template<size_t axis, int dir>
+    void exportBuffer(T* buff) const;
 
     void test();
 
@@ -98,31 +103,41 @@ namespace algebra{
     template<size_t... IS>
     void fillTG_impl(const array_t& start, const array_t& end, const std::index_sequence<IS...>&);
 
-    template<size_t... IS>
-    void importBuffer_impl(const size_t &axis, const int &dir, T* buff, const std::index_sequence<IS...>&);
+    template<size_t axis, int dir, size_t... IS>
+    void importBuffer_impl(T* buff, const std::index_sequence<IS...>&);
 
-    template<size_t... IS>
-    void exportBuffer_impl(const size_t &axis, const int &dir, T* buff, const std::index_sequence<IS...>&);
+    template<size_t axis, int dir, size_t... IS>
+    void exportBuffer_impl(T* buff, const std::index_sequence<IS...>&) const;
 
     friend std::ostream & operator<<(std::ostream &os, const self_t& arg){
       auto data_view = view(arg.data, all(), range(buff_len, XS + buff_len)...);
       return os << data_view;
     }
 
-
-    // void printX(){
-    //   auto data_view = view(arg.data, range(0, 0), range(buff_len, XS + buff_len)...);
-    //   return std::cout << data_view << std::endl << std::endl;
-    // }
-
     storage_t data;
   };
 
   namespace meta{
-    template <size_t... XS, size_t... IS>
-    size_t drop_prod(const size_t &axis, const std::index_sequence<IS...>&){
-      return (((IS == axis) ? 1 : XS) * ...);
-    }
+    template<size_t axis, typename, size_t... XS>
+    struct drop_prod_impl;
+
+    template<size_t axis, size_t... XS, size_t... IS>
+    struct drop_prod_impl<axis, std::index_sequence<IS...>, XS...>{
+        static constexpr size_t value = (((IS == axis) ? 1 : XS) * ...);
+    };
+
+    template<size_t axis, size_t... XS>
+    struct drop_prod : drop_prod_impl<
+      axis,
+      decltype(std::make_index_sequence<sizeof...(XS)>()),
+      XS...
+    > {};
+  }
+
+  template<typename T, size_t buff_len, size_t... XS>
+  template<size_t axis>
+  static constexpr size_t xfield<T, buff_len, XS...>::bufferSize(){
+    return buff_len * NDIMS * meta::drop_prod<axis, XS...>::value;
   }
 
 
@@ -183,9 +198,9 @@ namespace algebra{
   template<size_t... IS>
   auto xfield<T, buff_len, XS...>::offset_view_impl(const size_t &axis, const int &val, const std::index_sequence<IS...>&){
     return view(data, all(),
-      range(
-        ((IS != axis) ? buff_len : buff_len + val),
-        ((IS != axis) ? (buff_len + XS) : (buff_len + XS + val))
+      ((IS != axis)
+        ? range(buff_len, buff_len + XS)
+        : range(buff_len + val, buff_len + XS + val)
       )...
     );
   }
@@ -196,53 +211,44 @@ namespace algebra{
   }
 
   template<typename T, size_t buff_len, size_t... XS>
-  template<size_t... IS>
-  void xfield<T, buff_len, XS...>::exportBuffer_impl(const size_t &axis, const int &dir, T* buff, const std::index_sequence<IS...>& seq){
-    size_t buffer_size = buff_len * NDIMS * meta::drop_prod<XS...>(axis, seq);
-
-    auto buffer_view = adapt(buff, buffer_size, no_ownership(),
+  template<size_t axis, int dir, size_t... IS>
+  void xfield<T, buff_len, XS...>::exportBuffer_impl(T* buff, const std::index_sequence<IS...>& seq) const{
+    auto buffer_view = adapt(buff, bufferSize<axis>(), no_ownership(),
       std::array<size_t, NDIMS + 1>({NDIMS, ((IS == axis) ? buff_len : XS)... })
     );
     auto data_view = view(data, all(),
-      range(
-        (IS != axis || (dir == 1)) ? buff_len : XS,
-        (IS != axis || (dir == -1)) ? (XS + buff_len) : (2 * buff_len)
+      ((IS != axis)
+        ? range(buff_len, buff_len + XS)
+        : (dir == 1) ? range(XS, XS + buff_len) : range(buff_len, 2 * buff_len)
       )...
     );
-
     noalias(buffer_view) = data_view;
   }
 
   template<typename T, size_t buff_len, size_t... XS>
-  void xfield<T, buff_len, XS...>::exportBuffer(const size_t &axis, const int &dir, T* buff){
+  template<size_t axis, int dir>
+  void xfield<T, buff_len, XS...>::exportBuffer(T* buff) const{
     exportBuffer_impl(axis, dir, buff, std::make_index_sequence<sizeof...(XS)>());
   }
 
   template<typename T, size_t buff_len, size_t... XS>
-  template<size_t... IS>
+  template<size_t axis, int dir, size_t... IS>
   void xfield<T, buff_len, XS...>::importBuffer_impl(const size_t &axis, const int &dir, T* buff, const std::index_sequence<IS...>& seq){
-    size_t buffer_size = buff_len * NDIMS * meta::drop_prod<XS...>(axis, seq);
-
-    auto buffer_view = adapt(buff, buffer_size, no_ownership(),
+    auto buffer_view = adapt(buff, bufferSize<axis>(), no_ownership(),
       std::array<size_t, NDIMS + 1>({NDIMS, ((IS == axis) ? buff_len : XS)... })
     );
-    std::cout << axis << std::endl;
     auto data_view = view(data, all(),
-      range(
-        (IS != axis) ? buff_len : ((dir == 1) ? (XS + buff_len) : 0),
-        (IS != axis) ? (XS + buff_len) : ((dir == 1) ? (XS + 2 * buff_len) : buff_len)
+      ((IS != axis)
+        ? range(buff_len, buff_len + XS)
+        : (dir == 1) ? range(XS + buff_len, XS + 2 * buff_len) :  range(0, buff_len)
       )...
-      // ((IS != axis)
-      //     ? range(buff_len, buff_len + XS)
-      //     : (dir == 11 ? range(XS + buff_len, XS + 2*buff_len) : range(0, buff_len))
-      // )...
     );
-
     noalias(data_view) = buffer_view;
   }
 
   template<typename T, size_t buff_len, size_t... XS>
-  void xfield<T, buff_len, XS...>::importBuffer(const size_t &axis, const int &dir, T* buff){
+  template<size_t axis, int dir>
+  void xfield<T, buff_len, XS...>::importBuffer(T* buff){
     importBuffer_impl(axis, dir, buff, std::make_index_sequence<sizeof...(XS)>());
   }
 

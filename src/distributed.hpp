@@ -18,9 +18,6 @@ namespace distributed{
     Ind cord;
     int rank;
     int nbrs[3][2];
-
-    std::array<Real, 6 * N> send_buffs[3][2];
-    std::array<Real, 6 * N> rcv_buffs[3][2];
   }
 
   inline Communicator::Communicator(int* argc, char** argv[]){
@@ -47,7 +44,7 @@ namespace distributed{
       MPI_Cart_shift(cartcomm, i, 1, &nbrs[i][0], &nbrs[i][1]);
     }
 
-    std::cout << "My co-ordinates are: " << cord[0] << " , " << cord[1] << " , " << cord[2] << std::endl;
+    // std::cout << "My co-ordinates are: " << cord[0] << " , " << cord[1] << " , " << cord[2] << std::endl;
   }
 
   inline Communicator::~Communicator(){

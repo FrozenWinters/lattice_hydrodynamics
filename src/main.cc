@@ -1,6 +1,7 @@
 #include "algebra.hpp"
 #include "xalgebra.hpp"
 #include "distributed.hpp"
+#include "comm.hpp"
 #include <build_options.h>
 
 using Real = typename BuildOptions::real;
@@ -17,6 +18,7 @@ int main(int argc, char* argv[]){
 
   my_tensor Y;
   Y.fillTG(start, stop);
+  distributed::communicateBuffers(Y);
   //std::cout << Y << std::endl;
 
 
