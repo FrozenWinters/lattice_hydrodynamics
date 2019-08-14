@@ -20,7 +20,7 @@ include_directories("${CMAKE_BINARY_DIR}/include" "${PROJECT_SOURCE_DIR}/../xten
 
 include_directories("${CMAKE_BINARY_DIR}/include")
 
-add_executable(prog.elf ${PROJECT_SOURCE_DIR}/src/main.cc ${PROJECT_SOURCE_DIR}/src/distributed.cc)
+add_executable(prog.elf ${PROJECT_SOURCE_DIR}/src/main.cc)
 
 #[[add_custom_command(TARGET prog.elf POST_BUILD
   COMMAND time ibrun prog.elf

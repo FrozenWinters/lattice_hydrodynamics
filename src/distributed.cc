@@ -1,4 +1,4 @@
-#include "distributed.h"
+/*#include "distributed.h"
 #include <iostream>
 #include <cstdlib>
 
@@ -52,4 +52,4 @@ namespace distributed{
   void Communicator::recvFromAdjacent(void* buff, const size_t& size, const size_t& axis, const int& dir){
     MPI_Recv(buff, size, MPI_BYTE, nbrs[axis][dir == 1], MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   }
-}
+}*/

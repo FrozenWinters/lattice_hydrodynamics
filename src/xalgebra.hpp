@@ -1,3 +1,6 @@
+#ifndef XALGEBRA_HPP_
+#define XALGEBRA_HPP_
+
 #include <iostream>
 #include "xtensor/xfixed.hpp"
 #include "xtensor/xrandom.hpp"
@@ -122,7 +125,7 @@ namespace algebra{
     struct drop_prod_impl;
 
 
-    // More concise implementation using folds, not supported on the intel v18 compiler
+    // More concise implementation using fold, not supported on the intel v18 compiler
     /*template<size_t axis, size_t... XS, size_t... IS>
     struct drop_prod_impl<axis, std::index_sequence<IS...>, XS...>{
         static constexpr size_t value = (((IS == axis) ? 1 : XS) * ...);
@@ -287,3 +290,5 @@ namespace algebra{
     fillTG_impl(start, end, std::make_index_sequence<sizeof...(XS)>());
   }
 }
+
+#endif
