@@ -36,6 +36,10 @@ namespace distributed{
 
       Vect domainStart();
       Vect domainStop();
+
+      bool shouldIPrint() {
+        return (this->rank == 5);
+      }
     };
   }
 
@@ -106,7 +110,7 @@ namespace distributed{
 
     template<size_t N>
     void Communicator<N>::sendToAdjacent(void* buff, const size_t& size, const size_t& axis, const int& dir){
-      MPI_Send(buff, size, MPI_BYTE, this->nbrs[axis][dir == 1], MPI_ANY_TAG, MPI_COMM_WORLD);
+      MPI_Send(buff, size, MPI_BYTE, this->nbrs[axis][dir == 1], 0, MPI_COMM_WORLD);
     }
 
     template<size_t N>

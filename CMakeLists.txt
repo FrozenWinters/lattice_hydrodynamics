@@ -2,11 +2,11 @@ cmake_minimum_required(VERSION 3.8.0)
 
 project(fluids CXX)
 
-set(_REAL float)
-set(_L 8)
-set(_W 8)
-set(_H 8)
-set(_DOMAIN_SCALE 2)
+set(_REAL double)
+set(_L 4)
+set(_W 4)
+set(_H 4)
+set(_DOMAIN_SCALE 4)
 
 # set(CMAKE_CXX_FLAGS "-O3 -Wall -std=c++17 -xMIC-AVX512")
 set(CMAKE_CXX_COMPILER "mpicxx")
@@ -22,10 +22,10 @@ include_directories("${CMAKE_BINARY_DIR}/include")
 
 add_executable(prog.elf ${PROJECT_SOURCE_DIR}/src/main.cc)
 
-#[[add_custom_command(TARGET prog.elf POST_BUILD
+add_custom_command(TARGET prog.elf POST_BUILD
   COMMAND time ibrun prog.elf
   COMMENT "Running timed test:"
-)]]
+)
 
 #[[add_custom_command(TARGET prog.elf POST_BUILD
   COMMAND time prog.elf

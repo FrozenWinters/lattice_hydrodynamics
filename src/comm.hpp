@@ -36,6 +36,8 @@ namespace distributed{
       T buff[len];
       comm.recvFromAdjacent(buff, sizeof(T) * len, axis, dir);
       A.template importBuffer<axis, dir>(buff);
+      if(comm.shouldIPrint())
+        std::cout << "Recieved from axis " << axis << " dir " << dir << std::endl;
     }
 
     // template<typename T, size_t buff_len, size_t... XS>

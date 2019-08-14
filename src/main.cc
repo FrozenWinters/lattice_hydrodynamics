@@ -8,4 +8,7 @@ int main(int argc, char* argv[]){
   my_tensor Y;
   Y.fillTG(comm.domainStart(), comm.domainStop());
   distributed::communicateBuffers(Y, comm);
+  if(comm.shouldIPrint()){
+    std::cout << Y << std::endl;
+  }
 }

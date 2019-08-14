@@ -274,6 +274,7 @@ namespace algebra{
     const array_t len = {(end[IS] - start[IS])... };
 
     auto mesh = meshgrid(linspace<T>(pi * (2 * start[IS] + len[IS] / XS), pi * (2 * end[IS] - len[IS] / XS), XS)... );
+    std::cout << start[0] << " " << end[0] <<  std::endl;
 
     auto X = cos(get<2>(mesh)) * sin(get<1>(mesh)) * sin(get<0>(mesh));
     auto Y = -0.5 * cos(get<1>(mesh)) * sin(get<0>(mesh)) * sin(get<2>(mesh));
