@@ -51,9 +51,9 @@ has quite a lot of ontology to it.
 
 In C++, unlike most mainstream languages, these principles are non-contradictory.
 The mechanism enabling this is templates, which should be thought of as machines that
-build code. The problem of deducing template types at compile time is Turring-complete.
+build code. The problem of deducing template types at compile time is Turing-complete.
 This means that any arbitrary computation may performed at compile time as to decide
 how to combine various sections of code. Most of what could be seen as the unusual
 aspects of this project, arise from specifying logic and meaning to the compiler,
-all of which ceases to exist once the project is built. The mecanhisms for doing so
+all of which ceases to exist once the project is built. The mechanisms for doing so
 are quite unlike the rest of the language features.
