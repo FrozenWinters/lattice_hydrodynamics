@@ -57,6 +57,23 @@ namespace algebra{
       auto data_view = view(arg.data, all(), range(buff_len, XS + buff_len)...);
       return os << data_view;
     }
+
+    template<size_t... IS>
+    void print_buffer_impl(size_t axis, int dir, const std::index_sequence<IS...>&){
+      auto data_view = view(data, all(),
+        ((IS != axis)
+          ? range(buff_len, buff_len + XS)
+          : (dir == 1) ? range(XS + buff_len, XS + 2 * buff_len) :  range(0, buff_len)
+        )...
+      );
+      std::cout << "Buffer from axis: " << axis << " dir: " << dir << std::endl;
+      std::cout << data_view << std::endl;
+    }
+
+    void print_buffer(size_t axis, int dir){
+      print_buffer_impl(axis, dir, std::make_index_sequence<sizeof...(XS)>());
+    }
+
     static constexpr size_t h = 1;
 
     template<size_t... IS>
@@ -274,7 +291,6 @@ namespace algebra{
     const array_t len = {(end[IS] - start[IS])... };
 
     auto mesh = meshgrid(linspace<T>(pi * (2 * start[IS] + len[IS] / XS), pi * (2 * end[IS] - len[IS] / XS), XS)... );
-    std::cout << start[0] << " " << end[0] <<  std::endl;
 
     auto X = cos(get<2>(mesh)) * sin(get<1>(mesh)) * sin(get<0>(mesh));
     auto Y = -0.5 * cos(get<1>(mesh)) * sin(get<0>(mesh)) * sin(get<2>(mesh));

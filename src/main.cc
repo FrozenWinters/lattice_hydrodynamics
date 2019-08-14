@@ -10,5 +10,8 @@ int main(int argc, char* argv[]){
   distributed::communicateBuffers(Y, comm);
   if(comm.shouldIPrint()){
     std::cout << Y << std::endl;
+    Y.print_buffer(0, 1);
+    Y.print_buffer(0, -1);
+    Y.print_buffer(2, 1);
   }
 }
