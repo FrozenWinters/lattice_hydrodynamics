@@ -42,22 +42,6 @@ namespace algebra{
 
     void test();
 
-  private:
-
-    template<size_t... IS>
-    void fillTG_impl(const array_t& start, const array_t& end, const std::index_sequence<IS...>&);
-
-    template<size_t axis, int dir, size_t... IS>
-    void importBuffer_impl(T* buff, const std::index_sequence<IS...>&);
-
-    template<size_t axis, int dir, size_t... IS>
-    void exportBuffer_impl(T* buff, const std::index_sequence<IS...>&) const;
-
-    friend std::ostream& operator<<(std::ostream& os, const self_t& arg){
-      auto data_view = view(arg.data, all(), range(buff_len, XS + buff_len)...);
-      return os << data_view;
-    }
-
     template<size_t... IS>
     void print_buffer_impl(size_t axis, int dir, const std::index_sequence<IS...>&){
       auto data_view = view(data, all(),
@@ -72,6 +56,22 @@ namespace algebra{
 
     void print_buffer(size_t axis, int dir){
       print_buffer_impl(axis, dir, std::make_index_sequence<sizeof...(XS)>());
+    }
+
+  private:
+
+    template<size_t... IS>
+    void fillTG_impl(const array_t& start, const array_t& end, const std::index_sequence<IS...>&);
+
+    template<size_t axis, int dir, size_t... IS>
+    void importBuffer_impl(T* buff, const std::index_sequence<IS...>&);
+
+    template<size_t axis, int dir, size_t... IS>
+    void exportBuffer_impl(T* buff, const std::index_sequence<IS...>&) const;
+
+    friend std::ostream& operator<<(std::ostream& os, const self_t& arg){
+      auto data_view = view(arg.data, all(), range(buff_len, XS + buff_len)...);
+      return os << data_view;
     }
 
     static constexpr size_t h = 1;
