@@ -31,6 +31,8 @@ namespace algebra{
   public:
     void fillTG(const array_t& start, const array_t& end);
 
+    void fillValue(const T& val);
+
     template<size_t axis>
     static constexpr size_t bufferSize();
 
@@ -74,7 +76,7 @@ namespace algebra{
       return os << data_view;
     }
 
-    static constexpr size_t h = 1;
+    /*static constexpr size_t h = 1;
 
     template<size_t... IS>
     auto offset_view_impl(const size_t& axis, const int& val, const std::index_sequence<IS...>&);
@@ -129,7 +131,7 @@ namespace algebra{
 
     auto laplace(){
       return laplace_impl(std::make_index_sequence<NDIMS>());
-    }
+    }*/
 
 
 
@@ -171,7 +173,7 @@ namespace algebra{
   }
 
 
-  template<typename T, size_t buff_len, size_t... XS>
+  /*template<typename T, size_t buff_len, size_t... XS>
   void xfield<T, buff_len, XS...>::test(){
 
       // data =
@@ -238,7 +240,7 @@ namespace algebra{
   template<typename T, size_t buff_len, size_t... XS>
   auto xfield<T, buff_len, XS...>::offset_view(const size_t& axis, const int& val){
     return offset_view_impl(axis, val, std::make_index_sequence<sizeof...(XS)>());
-  }
+  }*/
 
   template<typename T, size_t buff_len, size_t... XS>
   template<size_t axis, int dir, size_t... IS>
@@ -305,6 +307,11 @@ namespace algebra{
   template<typename T, size_t buff_len, size_t... XS>
   void xfield<T, buff_len, XS...>::fillTG(const array_t& start, const array_t& end){
     fillTG_impl(start, end, std::make_index_sequence<sizeof...(XS)>());
+  }
+
+  template<typename T, size_t buff_len, size_t... XS>
+  void xfield<T, buff_len, XS...>::fillValue(const T& val){
+    view(data, all(), range(buff_len, XS + buff_len)...).fill(val);
   }
 }
 
