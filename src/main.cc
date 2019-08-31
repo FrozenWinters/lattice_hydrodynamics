@@ -1,26 +1,27 @@
-#include "algebra.hpp"
 #include <build_options.h>
+#include "comm.hpp"
 
-using namespace std;
+using my_tensor = space::vector_field<typename BuildOptions::real, 1, config.L, config.W, config.H>;
+using my_scalar = space::scalar_field<typename BuildOptions::real, 1, config.L, config.W, config.H>;
 
-using field = grid<typename BuildOptions::real, config.L, config.W, config.H, config.VecSize>;
+int main(int argc, char* argv[]){
+  distributed::Communicator comm(&argc, &argv);
+  my_tensor Y;
+  my_scalar Z;
 
-void __attribute__((noinline)) computeN(const field& in, field& out){
-  in.computeN(out);
-}
+  Y.fillTG(comm.domainStart(), comm.domainStop());
+  Z.fillValue(comm.getRank());
+  distributed::communicateBuffers(Y, comm);
+  distributed::communicateBuffers(Z, comm);
 
-int main(){
-  field& V = *(new field());
-  V.fillRand();
-  cout << "Matrix V:" << endl;
-  cout << V;
-
-  field& N = *(new field());
-  for(u_int i = 0; i < 40; i++){
-    N = {};
-    computeN(V, N);
+  if(comm.shouldIPrint()){
+    std::cout << Y << std::endl;
+    std::cout << Z << std::endl;
+    std::cout << Y.at(0, 0, 0, 0) << std::endl;
+    std::cout << Z.at(0, 0, 0) << std::endl;
+    Y.print_buffer(0, 1);
+    Y.print_buffer(0, -1);
+    Z.print_buffer(1, 1);
+    Z.print_buffer(1, -1);
   }
-
-  cout << "Matrix N:" << endl;
-  cout << N;
 }

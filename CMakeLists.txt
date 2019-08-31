@@ -3,24 +3,36 @@ cmake_minimum_required(VERSION 3.8.0)
 project(fluids CXX)
 
 set(_REAL double)
-set(_L 8)
-set(_W 8)
-set(_H 8)
-set(_VEC 8)
+set(_L 3)
+set(_W 3)
+set(_H 2)
+set(_DOMAIN_SCALE 2)
 
-# set(CMAKE_CXX "icpc")
-# set(CMAKE_CXX_FLAGS "-O3 -Wall -std=c++17 -xMIC-AVX512 -I../xsimd/include")
+# set(CMAKE_CXX_FLAGS "-O3 -Wall -std=c++17 -xMIC-AVX512")
+set(CMAKE_CXX_COMPILER "mpicxx")
 
-set(CMAKE_CXX_FLAGS "-O3 -Wall -std=c++17 -xMIC-AVX512")
-SET(CMAKE_CXX_COMPILER "icpc")
+set(CMAKE_CXX_FLAGS "-O3 -Wall -std=c++17")
+# set(CMAKE_CXX_COMPILER "g++")
 
 configure_file("src/build_options.h.in" "include/build_options.h")
 
-include_directories("${PROJECT_SOURCE_DIR}/../xsimd/include" "${CMAKE_BINARY_DIR}/include")
+# include_directories("${CMAKE_BINARY_DIR}/include" "${PROJECT_SOURCE_DIR}/../xtensor_build/include" "${PROJECT_SOURCE_DIR}/../xsimd/include" "${PROJECT_SOURCE_DIR}/../xtl_build/include")
+
+include_directories("${CMAKE_BINARY_DIR}/include")
 
 add_executable(prog.elf ${PROJECT_SOURCE_DIR}/src/main.cc)
 
-#file(GLOB_RECURSE SOURCES "src/*.cc" "src/*.hpp")
-#target_include_directories(${PROJECT_NAME} PRIVATE "../xsimd/include" "${CMAKE_CURRENT_BINARY_DIR}/include")
+# add_custom_command(TARGET prog.elf POST_BUILD
+#   COMMAND time ibrun prog.elf
+#   COMMENT "Running timed test:"
+# )
 
-#add_executable(${PROJECT_NAME} ${SOURCES})
+add_custom_command(TARGET prog.elf POST_BUILD
+  COMMAND time mpirun -np 8 --oversubscribe prog.elf
+  COMMENT "Running timed test:"
+)
+
+#[[add_custom_command(TARGET prog.elf POST_BUILD
+  COMMAND time prog.elf
+  COMMENT "Running timed test:"
+)]]
