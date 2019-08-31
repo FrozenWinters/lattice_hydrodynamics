@@ -5,6 +5,7 @@
 #include <array>
 #include <iostream>
 #include <cstdlib>
+#include <mpi.h>
 
 namespace distributed{
 
@@ -13,6 +14,14 @@ namespace distributed{
     struct CommunicatorData{
       void sendToAdjacent(void* buff, const size_t& size, const size_t& axis, const int& dir);
       void recvFromAdjacent(void* buff, const size_t& size, const size_t& axis, const int& dir);
+
+      int getRank(){
+        return rank;
+      }
+
+      bool shouldIPrint() {
+        return (this->rank == 0);
+      }
 
     protected:
       using Ind = std::array<int, 3>;
@@ -23,7 +32,11 @@ namespace distributed{
     };
 
     template<>
-    struct CommunicatorData<1> {};
+    struct CommunicatorData<1> {
+      constexpr bool shouldIPrint() {
+        return true;
+      }
+    };
 
     template<size_t N>
     class Communicator : public CommunicatorData<N>{
@@ -36,10 +49,6 @@ namespace distributed{
 
       Vect domainStart();
       Vect domainStop();
-
-      bool shouldIPrint() {
-        return (this->rank == 5);
-      }
     };
   }
 
@@ -57,14 +66,17 @@ namespace distributed{
       MPI_Init_thread(argc, argv, MPI_THREAD_MULTIPLE, &supported_status);
 
       if(supported_status != MPI_THREAD_MULTIPLE){
-        std::cerr << "ERROR: MPI implementation does not support thread-concurrent communication. Goodbye!" << std::endl;
+        std::cerr << "ERROR: MPI implementation does not support thread"
+          << "-concurrent communication; remove this call if strictly necessary."
+          << " Goodbye!" << std::endl;
         _Exit(EXIT_FAILURE);
       }
 
       MPI_Comm_size(MPI_COMM_WORLD, &runtime_numproc);
 
       if(runtime_numproc != numproc){
-        std::cerr << "ERROR: Expecting " << numproc << " processes, but getting " << runtime_numproc << ". Goodbye!" << std::endl;
+        std::cerr << "ERROR: Expecting " << numproc << " processes, but getting "
+          << runtime_numproc << ". Goodbye!" << std::endl;
         _Exit(EXIT_FAILURE);
       }
 

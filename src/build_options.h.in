@@ -6,11 +6,7 @@
 #cmakedefine _H @_H@
 #cmakedefine _DOMAIN_SCALE @_DOMAIN_SCALE@
 
-//#include <stddef.h>
-
-#if _DOMAIN_SCALE != 1
-#include <mpi.h>
-#endif
+#include <stddef.h>
 
 struct BuildOptions {
   using real = _REAL;
