@@ -1,3 +1,7 @@
+
+// This file wraps MPI functionality.
+// It also determines the region of space for which a process is responsible.
+
 #ifndef DISTRIBUTED_HPP_
 #define DISTRIBUTED_HPP_
 
@@ -12,8 +16,12 @@ namespace distributed{
   namespace detail{
     template <size_t N>
     struct CommunicatorData{
-      void sendToAdjacent(void* buff, const size_t& size, const size_t& axis, const int& dir);
-      void recvFromAdjacent(void* buff, const size_t& size, const size_t& axis, const int& dir);
+
+      template <int... axis_values>
+      void sendTo(void* buff, const size_t& size);
+
+      template <int... axis_values>
+      void recvFrom(void* buff, const size_t& size);
 
       int getRank(){
         return rank;

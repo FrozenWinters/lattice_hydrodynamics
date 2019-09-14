@@ -1,7 +1,14 @@
-#include <utility>
 
-// There are no fitting comments to be made on this section of code,
+// This file consists of meta utilities for generating stincils,
+// all the wile working within the cpp type system.
+// Supporting Intel v18 was a major constraint.
+// There are no additioanl fitting comments to be made on this,
 // apart from that it is unadulterated template meta-programming wankery.
+
+#ifndef META_HPP_
+#define META_HPP_
+
+#include <utility>
 
 namespace meta{
   template<class... AS>
@@ -103,21 +110,69 @@ namespace meta{
   using decode_t = typename decode<TA>::type;
 
   template <class... TS>
-  struct decode<list<TS...>>{
+  struct decode<list<TS...>> {
     using type = list<list_to_sequence_t<TS>...>;
   };
 
   template <class... IS>
-  struct cartesian{
+  struct cartesian {
     using type = decode_t<cartesian_product_t<sequence_to_list_t<IS>...>>;
   };
 
   template <class... IS>
   using cartesian_t = typename cartesian<IS...>::type;
 
-  using A = std::integer_sequence<int, 0, 2>;
-  using B = std::integer_sequence<int, 5, 7>;
+  // Conjunction for Intel 18 support
+  template<bool... vals>
+  struct conjunction;
 
-  using result = cartesian_t<A, B>;
+  template<bool... vals>
+  using conjunction_t = typename conjunction<vals...>::type;
+
+  template<>
+  struct conjunction<> {
+    using type = std::true_type;
+  };
+
+  template<bool val, bool... vals>
+  struct conjunction<val, vals...> {
+    using type = std::conditional_t<val, conjunction_t<vals...>, std::false_type>;
+  };
+
+  template<class TS>
+  struct filter_zero;
+
+  template<class TS>
+  using filter_zero_t = typename filter_zero<TS>::type;
+
+  template<>
+  struct filter_zero<empty> {
+    using type = empty;
+  };
+
+  template<int... AS, class... IS>
+  struct filter_zero<list<std::integer_sequence<int, AS...>, IS...>> {
+    using type =
+      std::conditional_t<
+        conjunction_t<(!AS)...>::value, //Condition
+        filter_zero_t<list<IS...>>, //True type, exluded
+        concatenate_t<list<std::integer_sequence<int, AS...>>, filter_zero_t<list<IS...>>>
+      >;
+  };
+
+  using dim1_stencil = std::integer_sequence<int, -1, 0, 1>;
+
+
+
+  template<size_t... XS>
+  using neighbour_stencil =
+    filter_zero_t<
+      cartesian_t<
+        //This is a rather messy way to repeat a value (sizeof...(XS)) times.
+        std::conditional_t<XS != XS + 1, dim1_stencil, void>...
+      >
+    >;
 
 }
+
+#endif

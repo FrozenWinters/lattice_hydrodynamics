@@ -1,5 +1,5 @@
 #include <build_options.h>
-#include "comm.hpp"
+#include "agency.hpp"
 
 using my_tensor = space::vector_field<typename BuildOptions::real, 1, config.L, config.W, config.H>;
 using my_scalar = space::scalar_field<typename BuildOptions::real, 1, config.L, config.W, config.H>;

@@ -1,48 +1,16 @@
-#ifndef COMM_HPP_
-#define COMM_HPP_
+
+// This file implements the communication agency, employing agent taks
+// which run send and recieve errands. The agency does the planning for you,
+// as it's a good and propoerly managed agency; you simply bring it the data
+// and communication chanel, and by the time you leave the door
+// (i.e. when the call returns), you may rest assured that the work is done.
+
+#ifndef AGENCY_HPP_
+#define AGENCY_HPP_
 
 #include "space.hpp"
 #include "distributed.hpp"
 #include <future>
-
-namespace meta{
-  template <class TA, class TB>
-  struct concatenate;
-
-  class <class... AS, class... BS>
-  struct concatenate<std::tuple<AS...>, std::tuple<BS...>> {
-    using type = std::tuple<AS..., BS...>;
-  };
-
-  template <class... TS>
-  struct cartesian_product;
-
-  template <>
-  struct cartesian_product<>{
-    using type = void;
-  }
-
-  template <class TB>
-  struct cartesian_product<std::tuple<>, TB> {
-    using type = std::tuple<>;
-  }
-
-  template <class A, class... AS, class... BS>
-  struct cartesian_product<std::tuple<A, AS...>, std::tuple<BS...>> {
-    using type =
-      concatenate<
-        std::tuple< std::tuple<A, BS>... >,
-        cartesian_product<std::tuple<AS...>, std::tuple<BS...>>
-      >::type;
-  };
-
-  /*template <int A, int... AS, int... BS>
-  struct cartesian_product<std::integer_sequence<int, A, AS...>, std::integer_sequence<int, BS...>> {
-    using type =
-  }*/
-}
-
-
 
 namespace distributed{
 
@@ -71,7 +39,7 @@ namespace distributed{
       constexpr size_t len = space::field<T, buff_len, rank, XS...>::template bufferSize<axis_values...>();
       T buff[len];
       A.template exportBuffer<axis_values...>(buff);
-      comm.sendToAdjacent(buff, sizeof(T) * len, axis_values...);
+      comm.sendTo(buff, sizeof(T) * len, axis_values...);
     }
 
     template <typename T, size_t buff_len, size_t rank, size_t... XS>
@@ -83,7 +51,7 @@ namespace distributed{
     void _Comm_Tasks<N, T, buff_len, rank, XS...>::_task_import(space::field<T, buff_len, rank, XS...>& A, Communicator<N>& comm){
       constexpr size_t len = space::field<T, buff_len, rank, XS...>::template bufferSize<axis_values...>();
       T buff[len];
-      comm.recvFromAdjacent(buff, sizeof(T) * len, axis_values...);
+      comm.recvFrom(buff, sizeof(T) * len, axis_values...);
       A.template importBuffer<axis_values...>(buff);
     }
 
@@ -96,25 +64,27 @@ namespace distributed{
       A.template importBuffer<axis_values...>(buff);
     }
 
-    template <size_t N, typename T, size_t buff_len, size_t rank, size_t... XS, size_t... IS>
-    void communicateBuffers_impl(space::field<T, buff_len, rank, XS...>& A, Communicator<N>& comm, const std::index_sequence<IS...>&){
-      for(auto& task :
-        {
-          std::async(std::launch::async, _Comm_Tasks<N, T, buff_len, rank, XS...>::template _task_export<IS, +1>, std::ref(A), std::ref(comm))...,
-          std::async(std::launch::async, _Comm_Tasks<N, T, buff_len, rank, XS...>::template _task_export<IS, -1>, std::ref(A), std::ref(comm))...,
-          std::async(std::launch::async, _Comm_Tasks<N, T, buff_len, rank, XS...>::template _task_import<IS, +1>, std::ref(A), std::ref(comm))...,
-          std::async(std::launch::async, _Comm_Tasks<N, T, buff_len, rank, XS...>::template _task_import<IS, -1>, std::ref(A), std::ref(comm))...
-        }
-      ) {
+    template <size_t N, typename T, size_t buff_len, size_t rank, size_t... XS, int... axis_values>
+    auto&& launchExport(space::field<T, buff_len, rank, XS...>& A, Communicator<N>& comm, const std::integer_sequence<int, axis_values...>&){
+      return std::async(std::launch::async, _Comm_Tasks<N, T, buff_len, rank, XS...>::template _task_export<axis_values...>, std::ref(A), std::ref(comm));
+    }
+
+    template <size_t N, typename T, size_t buff_len, size_t rank, size_t... XS, int... axis_values>
+    auto&& launchImport(space::field<T, buff_len, rank, XS...>& A, Communicator<N>& comm, const std::integer_sequence<int, axis_values...>&){
+      return std::async(std::launch::async, _Comm_Tasks<N, T, buff_len, rank, XS...>::template _task_import<axis_values...>, std::ref(A), std::ref(comm));
+    }
+
+    template <size_t N, typename T, size_t buff_len, size_t rank, size_t... XS, class... IS>
+    void communicateBuffers_impl(space::field<T, buff_len, rank, XS...>& A, Communicator<N>& comm, const std::tuple<IS...>&){
+      for(auto& task : {launchExport(A, comm, IS())..., launchImport(A, comm, IS())...}) {
         task.wait();
       }
     }
   }
 
-
   template <typename T, size_t buff_len, size_t rank, size_t... XS>
   void communicateBuffers(space::field<T, buff_len, rank, XS...>& A, Communicator& comm){
-    detail::communicateBuffers_impl(A, comm, std::make_index_sequence<sizeof...(XS)>());
+    detail::communicateBuffers_impl(A, comm, meta::neighbour_stencil<XS...>());
   }
 }
 

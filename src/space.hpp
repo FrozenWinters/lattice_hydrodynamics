@@ -1,3 +1,9 @@
+
+// This file contains an answer to the abstract question of:
+// "What is a buffered container?"
+// It fills in the semantics of the dasein of such a container.
+// Such as, what such a container does? How does it sepnd it's time?
+
 #ifndef SPACE_HPP_
 #define SPACE_HPP_
 
