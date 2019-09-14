@@ -10,7 +10,7 @@
 namespace distributed{
 
   namespace detail{
-    template<size_t N>
+    template <size_t N>
     struct CommunicatorData{
       void sendToAdjacent(void* buff, const size_t& size, const size_t& axis, const int& dir);
       void recvFromAdjacent(void* buff, const size_t& size, const size_t& axis, const int& dir);
@@ -31,14 +31,14 @@ namespace distributed{
       int nbrs[3][2];
     };
 
-    template<>
+    template <>
     struct CommunicatorData<1> {
       constexpr bool shouldIPrint() {
         return true;
       }
     };
 
-    template<size_t N>
+    template <size_t N>
     class Communicator : public CommunicatorData<N>{
       using Real = typename BuildOptions::real;
       using Vect = std::array<Real, 3>;
@@ -55,7 +55,7 @@ namespace distributed{
   using Communicator = detail::Communicator<config.DOMAIN_SCALE>;
 
   namespace detail{
-    template<size_t N>
+    template <size_t N>
     Communicator<N>::Communicator(int* argc, char** argv[]){
       constexpr static size_t numproc = N * N * N;
       constexpr static int sides[3] = {N, N, N};
@@ -89,43 +89,43 @@ namespace distributed{
       }
     }
 
-    template<>
+    template <>
     Communicator<1>::Communicator(int* argc, char** argv[]){};
 
-    template<size_t N>
+    template <size_t N>
     Communicator<N>::~Communicator(){
       MPI_Finalize();
     }
 
-    template<>
+    template <>
     Communicator<1>::~Communicator() {};
 
-    template<size_t N>
+    template <size_t N>
     auto Communicator<N>::domainStart() -> Vect{
       return {((Real) this->cord[0]) / N, ((Real) this->cord[1]) / N, ((Real) this->cord[2]) / N};
     }
 
-    template<>
+    template <>
     auto Communicator<1>::domainStart() -> Vect{
       return {(Real) 0, (Real) 0, (Real) 0};
     }
 
-    template<size_t N>
+    template <size_t N>
     auto Communicator<N>::domainStop() -> Vect{
       return {((Real) this->cord[0] + 1) / N, ((Real) this->cord[1] + 1) / N, ((Real) this->cord[2] + 1) / N};
     }
 
-    template<>
+    template <>
     auto Communicator<1>::domainStop() -> Vect{
       return {(Real) 1, (Real) 1, (Real) 1};
     }
 
-    template<size_t N>
+    template <size_t N>
     void CommunicatorData<N>::sendToAdjacent(void* buff, const size_t& size, const size_t& axis, const int& dir){
       MPI_Send(buff, size, MPI_BYTE, this->nbrs[axis][dir == 1], 0, MPI_COMM_WORLD);
     }
 
-    template<size_t N>
+    template <size_t N>
     void CommunicatorData<N>::recvFromAdjacent(void* buff, const size_t& size, const size_t& axis, const int& dir){
       MPI_Recv(buff, size, MPI_BYTE, this->nbrs[axis][dir == 1], MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
