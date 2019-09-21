@@ -10,17 +10,46 @@
 #include <iostream>
 #include <cstdlib>
 #include <mpi.h>
-#include "xtensor/xfixed.hpp"
+#include <stencil.hpp>
 
 namespace meta{
-  //
+  template<size_t a, size_t n>
+  struct pow{
+    static constexpr size_t value = a * pow<a, n-1>::value;
+  };
+
+  template<size_t a>
+  struct pow<a, 0>{
+    static constexpr size_t value = 1;
+  };
+
+  template<size_t a, size_t n>
+  static constexpr size_t pow_v = pow<a, n>::value;
 }
 
 namespace distributed{
 
   namespace detail{
-    template <size_t dim, size_t scale>
+    template<int... axis_values>
+    struct nI;
+
+    template<int val, int... axis_values>
+    struct nI<val, axis_values...>{
+      static constexpr size_t value = 3 * nI<axis_values...>::value + (val + 1);
+    };
+
+    template<>
+    struct nI<>{
+      static constexpr size_t value = 0;
+    };
+
+    template<int... axis_values>
+    static constexpr size_t nI_v = nI<axis_values...>::value;
+
+    template <size_t N, size_t dim>
     struct CommunicatorData{
+      using self_t = CommunicatorData<N, dim>;
+      using Ind = std::array<int, dim>;
 
       template <int... axis_values>
       void sendTo(void* buff, const size_t& size);
@@ -28,48 +57,83 @@ namespace distributed{
       template <int... axis_values>
       void recvFrom(void* buff, const size_t& size);
 
-      int getRank(){
+      int getRank() const{
         return rank;
       }
 
-      bool shouldIPrint() {
+      bool shouldIPrint() const{
         return (this->rank == 0);
       }
 
     protected:
-      using Ind = std::array<int, dim>;
-      MPI_Comm cartcomm;
       Ind cord;
       int rank;
 
-      template<class... Args>
-      auto nbrsInd(Args... args) const -> std::enable_if_t<sizeof...(Args) == dim, int> {
-        args
+      inline static int indToRank(const Ind& loc){
+        int result = 0;
+        for(int i = 0; i < dim; ++i){
+          result *= N;
+          result += (loc[i] + N) % N;
+        }
+        return result;
       }
 
-    private:
+      inline static Ind rankToInd(int rank){
+        Ind result;
+        for(int i = 0; i < dim; ++i){
+          result[i] = rank % N;
+          rank /= N;
+        }
+        return result;
+      }
 
-      using nbrInds_t = xt::
+      template<int... axis_values, int... VS>
+      Ind shift_impl(
+        const std::integer_sequence<int, axis_values...>&,
+        const std::index_sequence<int, VS...>&
+      ) const {
+        return {(cord[VS] + axis_values)...};
+      }
 
-      template<class... Args>
-      inline static int nbrsInd(Args... args){
-        (args + 1) *
-      };
+      template<int... axis_values>
+      Ind shift(const std::integer_sequence<int, axis_values...>& offset) const {
+        return self_t::shift_impl(offset, std::make_index_sequence<dim>);
+      }
 
-      int nbrs[dim * 3];
+      template<int... axis_values>
+      void setNbr(const std::integer_sequence<int, axis_values...>& offset){
+        this->nbrs[nI_v<axis_values...>] = self_t::indToRank(shift(offset));
+      }
+
+      template<class... IS>
+      void setNbrs_impl(const std::tuple<IS...>&){
+        for(auto& offset : {(IS())... }){
+          setNbr(offset);
+        }
+      }
+
+      template<class... IS>
+      void setNbrs(){
+        cord = self_t::rankToInd(rank);
+        setNbrs_impl(meta::neighbour_stencil<dim>());
+      }
+
+      private:
+
+      int nbrs[meta::pow_v<3, dim>];
     };
 
-    template <>
-    struct CommunicatorData<1> {
+    template <size_t dim>
+    struct CommunicatorData<1, dim> {
       constexpr bool shouldIPrint() {
         return true;
       }
     };
 
-    template <size_t N>
-    class Communicator : public CommunicatorData<N>{
+    template <size_t N, size_t dim>
+    class Communicator : public CommunicatorData<N, dim>{
       using Real = typename BuildOptions::real;
-      using Vect = std::array<Real, 3>;
+      using Vect = std::array<Real, dim>;
 
     public:
       Communicator(int* argc, char** argv[]);
@@ -80,14 +144,25 @@ namespace distributed{
     };
   }
 
-  using Communicator = detail::Communicator<config.DOMAIN_SCALE>;
+  using Communicator = detail::Communicator<config.DOMAIN_SCALE, 3>;
 
   namespace detail{
-    template <size_t N>
-    Communicator<N>::Communicator(int* argc, char** argv[]){
-      constexpr static size_t numproc = N * N * N;
-      constexpr static int sides[3] = {N, N, N};
-      constexpr static int periodic[3] = {1, 1, 1};
+
+    template <size_t N, size_t dim>
+    template <int... axis_values>
+    void CommunicatorData<N, dim>::sendTo(void* buff, const size_t& size){
+      MPI_Send(buff, size, MPI_BYTE, nbrs[nI_v<axis_values...>], 0, MPI_COMM_WORLD);
+    }
+
+    template <size_t N, size_t dim>
+    template <int... axis_values>
+    void CommunicatorData<N, dim>::recvFrom(void* buff, const size_t& size){
+      MPI_Recv(buff, size, MPI_BYTE, nbrs[nI_v<axis_values...>], MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
+
+    template <size_t N, size_t dim>
+    Communicator<N, dim>::Communicator(int* argc, char** argv[]) {
+      constexpr static size_t numproc = meta::pow_v<N, dim>;
 
       int runtime_numproc, supported_status;
 
@@ -108,25 +183,21 @@ namespace distributed{
         _Exit(EXIT_FAILURE);
       }
 
-      MPI_Cart_create(MPI_COMM_WORLD, 3, sides, periodic, 0, &this->cartcomm);
-      MPI_Comm_rank(this->cartcomm, &this->rank);
-      MPI_Cart_coords(this->cartcomm, this->rank, 3, this->cord.data());
+      MPI_Comm_rank(MPI_COMM_WORLD, &this->rank);
 
-      for(int i = 0; i < 3; ++i){
-        MPI_Cart_shift(this->cartcomm, i, 1, &this->nbrs[i][0], &this->nbrs[i][1]);
-      }
+      this->setNbrs();
     }
 
-    template <>
-    Communicator<1>::Communicator(int* argc, char** argv[]){};
+    template <size_t dim>
+    Communicator<1, dim>::Communicator(int* argc, char** argv[]) {};
 
-    template <size_t N>
-    Communicator<N>::~Communicator(){
+    template <size_t N, size_t dim>
+    Communicator<N, dim>::::~Communicator(){
       MPI_Finalize();
     }
 
-    template <>
-    Communicator<1>::~Communicator() {};
+    template <size_t dim>
+    Communicator<1, dim>::~Communicator() {};
 
     template <size_t N>
     auto Communicator<N>::domainStart() -> Vect{
@@ -146,16 +217,6 @@ namespace distributed{
     template <>
     auto Communicator<1>::domainStop() -> Vect{
       return {(Real) 1, (Real) 1, (Real) 1};
-    }
-
-    template <size_t N>
-    void CommunicatorData<N>::sendToAdjacent(void* buff, const size_t& size, const size_t& axis, const int& dir){
-      MPI_Send(buff, size, MPI_BYTE, this->nbrs[axis][dir == 1], 0, MPI_COMM_WORLD);
-    }
-
-    template <size_t N>
-    void CommunicatorData<N>::recvFromAdjacent(void* buff, const size_t& size, const size_t& axis, const int& dir){
-      MPI_Recv(buff, size, MPI_BYTE, this->nbrs[axis][dir == 1], MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
   }
 }

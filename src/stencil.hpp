@@ -6,8 +6,8 @@
 // There are no additioanl fitting comments to be made on this,
 // apart from that it is unadulterated template meta-programming wankery.
 
-#ifndef META_HPP_
-#define META_HPP_
+#ifndef STENCIL_HPP_
+#define STENCIL_HPP_
 
 #include <utility>
 
@@ -161,16 +161,24 @@ namespace meta{
       >;
   };
 
+  template<template<class...> class type, class param, class IS>
+  struct repeat_param_impl;
+
+  template<template<class...> class type, class param, size_t... AS>
+  struct repeat_param_impl<type, pram, std::index_sequence<AS...>>
+    : public type<std::conditional_t<AS != AS + 1, param, void>...> {};
+
+  template<template<class...> class type, class param, size_t times>
+  struct repeat_param
+    : public repeat_param_impl<type, param, std::make_index_sequence<times>> {};
+
   using dim1_stencil = std::integer_sequence<int, -1, 0, 1>;
 
-  template<size_t... XS>
-  using neighbour_stencil =
-    filter_zero_t<
-      cartesian_t<
-        //This is a rather messy way to repeat a value (sizeof...(XS)) times.
-        std::conditional_t<XS != XS + 1, dim1_stencil, void>...
-      >
-    >;
+  template<size_t dim>
+  using neighbour_stencil = repeat_param<cartesian_t, dim1_stencil, dim>;
+
+  template<size_t dim>
+  using strict_neighbour_stencil = filter_zero_t<neighbour_stencil<dim>>;
 
 }
 

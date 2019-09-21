@@ -10,6 +10,7 @@
 
 #include "space.hpp"
 #include "distributed.hpp"
+#include "stencil.hpp"
 #include <future>
 
 namespace distributed{
@@ -125,7 +126,7 @@ namespace distributed{
 
   template <typename T, size_t buff_len, size_t rank, size_t... XS>
   void communicateBuffers(space::field<T, buff_len, rank, XS...>& A, Communicator& comm){
-    detail::communicateBuffers_impl(A, comm, meta::neighbour_stencil<XS...>());
+    detail::communicateBuffers_impl(A, comm, meta::strict_neighbour_stencil<sizeof...(XS)>());
   }
 }
 
