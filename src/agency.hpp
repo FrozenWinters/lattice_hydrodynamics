@@ -18,25 +18,39 @@ namespace distributed{
     template <size_t N, typename T, size_t buff_len, size_t rank, size_t... XS>
     struct _Comm_Tasks{
       template <int... axis_values>
-      static void _task_export(const space::field<T, buff_len, rank, XS...>& A, Communicator<N>& comm);
+      static void _task_export(
+        const space::field<T, buff_len, rank, XS...>& A, Communicator<N>& comm
+      );
 
       template <int... axis_values>
-      static void _task_import(space::field<T, buff_len, rank, XS...>& A, Communicator<N>& comm);
+      static void _task_import(
+        space::field<T, buff_len, rank, XS...>& A, Communicator<N>& comm
+      );
     };
 
     template <typename T, size_t buff_len, size_t rank, size_t... XS>
     struct _Comm_Tasks<1, T, buff_len, rank, XS...>{
       template <int... axis_values>
-      static void _task_export(const space::field<T, buff_len, rank, XS...>& A, Communicator<1>& comm);
+      static void _task_export(
+        const space::field<T, buff_len, rank, XS...>& A,
+        Communicator<1>& comm
+      );
 
       template <int... axis_values>
-      static void _task_import(space::field<T, buff_len, rank, XS...>& A, Communicator<1>& comm);
+      static void _task_import(
+        space::field<T, buff_len, rank, XS...>& A,
+        Communicator<1>& comm
+      );
     };
 
     template <size_t N, typename T, size_t buff_len, size_t rank, size_t... XS>
     template <int... axis_values>
-    void _Comm_Tasks<N, T, buff_len, rank, XS...>::_task_export(const space::field<T, buff_len, rank, XS...>& A, Communicator<N>& comm){
-      constexpr size_t len = space::field<T, buff_len, rank, XS...>::template bufferSize<axis_values...>();
+    void _Comm_Tasks<N, T, buff_len, rank, XS...>::_task_export(
+      const space::field<T, buff_len, rank, XS...>& A, Communicator<N>& comm
+    ){
+      constexpr size_t len =
+        space::field<T, buff_len, rank, XS...>
+        ::template bufferSize<axis_values...>();
       T buff[len];
       A.template exportBuffer<axis_values...>(buff);
       comm.sendTo(buff, sizeof(T) * len, axis_values...);
@@ -44,12 +58,18 @@ namespace distributed{
 
     template <typename T, size_t buff_len, size_t rank, size_t... XS>
     template <int... axis_values>
-    void _Comm_Tasks<1, T, buff_len, rank, XS...>::_task_export(const space::field<T, buff_len, rank, XS...>& A, Communicator<1>& comm) {};
+    void _Comm_Tasks<1, T, buff_len, rank, XS...>::_task_export(
+      const space::field<T, buff_len, rank, XS...>& A, Communicator<1>& comm
+    ) {};
 
     template <size_t N, typename T, size_t buff_len, size_t rank, size_t... XS>
     template <int... axis_values>
-    void _Comm_Tasks<N, T, buff_len, rank, XS...>::_task_import(space::field<T, buff_len, rank, XS...>& A, Communicator<N>& comm){
-      constexpr size_t len = space::field<T, buff_len, rank, XS...>::template bufferSize<axis_values...>();
+    void _Comm_Tasks<N, T, buff_len, rank, XS...>::_task_import(
+      space::field<T, buff_len, rank, XS...>& A, Communicator<N>& comm
+    ){
+      constexpr size_t len =
+        space::field<T, buff_len, rank, XS...>
+        ::template bufferSize<axis_values...>();
       T buff[len];
       comm.recvFrom(buff, sizeof(T) * len, axis_values...);
       A.template importBuffer<axis_values...>(buff);
@@ -57,25 +77,46 @@ namespace distributed{
 
     template <typename T, size_t buff_len, size_t rank, size_t... XS>
     template <int... axis_values>
-    void _Comm_Tasks<1, T, buff_len, rank, XS...>::_task_import(space::field<T, buff_len, rank, XS...>& A, Communicator<1>& comm){
-      constexpr size_t len = space::field<T, buff_len, rank, XS...>::template bufferSize<axis_values...>();
+    void _Comm_Tasks<1, T, buff_len, rank, XS...>::_task_import(
+      space::field<T, buff_len, rank, XS...>& A, Communicator<1>& comm
+    ){
+      constexpr size_t len =
+        space::field<T, buff_len, rank, XS...>
+        ::template bufferSize<axis_values...>();
       T buff[len];
       A.template exportBuffer<(- axis_values)...>(buff);
       A.template importBuffer<axis_values...>(buff);
     }
 
     template <size_t N, typename T, size_t buff_len, size_t rank, size_t... XS, int... axis_values>
-    auto&& launchExport(space::field<T, buff_len, rank, XS...>& A, Communicator<N>& comm, const std::integer_sequence<int, axis_values...>&){
-      return std::async(std::launch::async, _Comm_Tasks<N, T, buff_len, rank, XS...>::template _task_export<axis_values...>, std::ref(A), std::ref(comm));
+    auto&& launchExport(
+      space::field<T, buff_len, rank, XS...>& A, Communicator<N>& comm,
+      const std::integer_sequence<int, axis_values...>&
+    ){
+      return std::async(
+        std::launch::async,
+        _Comm_Tasks<N, T, buff_len, rank, XS...>::template _task_export<axis_values...>,
+        std::ref(A), std::ref(comm)
+      );
     }
 
     template <size_t N, typename T, size_t buff_len, size_t rank, size_t... XS, int... axis_values>
-    auto&& launchImport(space::field<T, buff_len, rank, XS...>& A, Communicator<N>& comm, const std::integer_sequence<int, axis_values...>&){
-      return std::async(std::launch::async, _Comm_Tasks<N, T, buff_len, rank, XS...>::template _task_import<axis_values...>, std::ref(A), std::ref(comm));
+    auto&& launchImport(
+      space::field<T, buff_len, rank, XS...>& A, Communicator<N>& comm,
+      const std::integer_sequence<int, axis_values...>&
+    ){
+      return std::async(
+        std::launch::async,
+        _Comm_Tasks<N, T, buff_len, rank, XS...>::template _task_import<axis_values...>,
+        std::ref(A), std::ref(comm)
+      );
     }
 
     template <size_t N, typename T, size_t buff_len, size_t rank, size_t... XS, class... IS>
-    void communicateBuffers_impl(space::field<T, buff_len, rank, XS...>& A, Communicator<N>& comm, const std::tuple<IS...>&){
+    void communicateBuffers_impl(
+      space::field<T, buff_len, rank, XS...>& A, Communicator<N>& comm,
+      const std::tuple<IS...>&
+    ){
       for(auto& task : {launchExport(A, comm, IS())..., launchImport(A, comm, IS())...}) {
         task.wait();
       }

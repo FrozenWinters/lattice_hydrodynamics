@@ -1,6 +1,7 @@
 
 // This file consists of meta utilities for generating stincils,
 // all the wile working within the cpp type system.
+// These implementation have large overlap with typelists, e.g. Loki/Boost.MPL
 // Supporting Intel v18 was a major constraint.
 // There are no additioanl fitting comments to be made on this,
 // apart from that it is unadulterated template meta-programming wankery.
@@ -17,19 +18,19 @@ namespace meta{
   using empty = list<>;
 
   template <class... TS>
-  struct concatenate;
+  struct append;
 
   template <class... TS>
-  using concatenate_t = typename concatenate<TS...>::type;
+  using append_t = typename append<TS...>::type;
 
   template <class TA>
-  struct concatenate<TA> {
+  struct append<TA> {
     using type = TA;
   };
 
   template <class... AS, class... BS, class... TS>
-  struct concatenate<list<AS...>, list<BS...>, TS...> {
-    using type = concatenate_t<list<AS..., BS...>, TS...>;
+  struct append<list<AS...>, list<BS...>, TS...> {
+    using type = append_t<list<AS..., BS...>, TS...>;
   };
 
   template <class... TS>
@@ -45,12 +46,12 @@ namespace meta{
 
   template <class... AS, class... TS>
   struct flatten<list<AS...>, TS...> {
-    using type = concatenate_t<flatten_t<AS>..., flatten_t<TS...>>;
+    using type = append_t<flatten_t<AS>..., flatten_t<TS...>>;
   };
 
   template <class A, class... TS>
   struct flatten<A, TS...> {
-    using type = concatenate_t<list<A>, flatten_t<TS...>>;
+    using type = append_t<list<A>, flatten_t<TS...>>;
   };
 
   template <class... TS>
@@ -73,7 +74,7 @@ namespace meta{
   struct cartesian_product<list<A, AS...>, list<BS...>, TS...> {
     using type =
       cartesian_product_t<
-        concatenate_t<
+        append_t<
           list<flatten_t<A, BS>...>,
           cartesian_product_t<list<AS...>, list<BS...>>
         >,
@@ -156,13 +157,11 @@ namespace meta{
       std::conditional_t<
         conjunction_t<(!AS)...>::value, //Condition
         filter_zero_t<list<IS...>>, //True type, exluded
-        concatenate_t<list<std::integer_sequence<int, AS...>>, filter_zero_t<list<IS...>>>
+        append_t<list<std::integer_sequence<int, AS...>>, filter_zero_t<list<IS...>>>
       >;
   };
 
   using dim1_stencil = std::integer_sequence<int, -1, 0, 1>;
-
-
 
   template<size_t... XS>
   using neighbour_stencil =

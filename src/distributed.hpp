@@ -10,11 +10,16 @@
 #include <iostream>
 #include <cstdlib>
 #include <mpi.h>
+#include "xtensor/xfixed.hpp"
+
+namespace meta{
+  //
+}
 
 namespace distributed{
 
   namespace detail{
-    template <size_t N>
+    template <size_t dim, size_t scale>
     struct CommunicatorData{
 
       template <int... axis_values>
@@ -32,11 +37,26 @@ namespace distributed{
       }
 
     protected:
-      using Ind = std::array<int, 3>;
+      using Ind = std::array<int, dim>;
       MPI_Comm cartcomm;
       Ind cord;
       int rank;
-      int nbrs[3][2];
+
+      template<class... Args>
+      auto nbrsInd(Args... args) const -> std::enable_if_t<sizeof...(Args) == dim, int> {
+        args
+      }
+
+    private:
+
+      using nbrInds_t = xt::
+
+      template<class... Args>
+      inline static int nbrsInd(Args... args){
+        (args + 1) *
+      };
+
+      int nbrs[dim * 3];
     };
 
     template <>
