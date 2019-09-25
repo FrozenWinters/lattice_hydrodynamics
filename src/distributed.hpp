@@ -1,6 +1,8 @@
 
-// This file wraps MPI functionality.
-// It also determines the region of space for which a process is responsible.
+// This file is responsible for organising the processes that we see at runtime.
+// This includes wrapping MPI send/recieve calls, implementing *our own*
+// Cartesian topology (which goes beyond the coresponding functionality
+// in the MPI specification), and doing domain decomposition.
 
 #ifndef DISTRIBUTED_HPP_
 #define DISTRIBUTED_HPP_
@@ -10,7 +12,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <mpi.h>
-#include <stencil.hpp>
+#include "stencil.hpp"
 
 namespace meta{
   template<size_t a, size_t n>
@@ -18,13 +20,29 @@ namespace meta{
     static constexpr size_t value = a * pow<a, n-1>::value;
   };
 
-  template<size_t a>
+  template <size_t a>
   struct pow<a, 0>{
     static constexpr size_t value = 1;
   };
 
-  template<size_t a, size_t n>
+  template <size_t a, size_t n>
   static constexpr size_t pow_v = pow<a, n>::value;
+
+  template <int... axis_values>
+  struct first_nonzero;
+
+  template<int... axis_values>
+  static constexpr int first_nonzero_v = first_nonzero<axis_values...>::value;
+
+  template <>
+  struct first_nonzero<> {
+    static constexpr int value = 0;
+  };
+
+  template<int first, int... rest>
+  struct first_nonzero<first, rest...>{
+    static constexpr int value = (first ? first : first_nonzero_v<rest...>);
+  };
 }
 
 namespace distributed{
@@ -62,7 +80,7 @@ namespace distributed{
       }
 
       bool shouldIPrint() const{
-        return (this->rank == 0);
+        return (this->rank == 2);
       }
 
     protected:
@@ -87,29 +105,33 @@ namespace distributed{
         return result;
       }
 
-      template<int... axis_values, int... VS>
+      template<int... axis_values, size_t... VS>
       Ind shift_impl(
         const std::integer_sequence<int, axis_values...>&,
-        const std::index_sequence<int, VS...>&
+        const std::index_sequence<VS...>&
       ) const {
         return {(cord[VS] + axis_values)...};
       }
 
       template<int... axis_values>
       Ind shift(const std::integer_sequence<int, axis_values...>& offset) const {
-        return self_t::shift_impl(offset, std::make_index_sequence<dim>);
+        return shift_impl(offset, std::make_index_sequence<dim>());
       }
 
       template<int... axis_values>
-      void setNbr(const std::integer_sequence<int, axis_values...>& offset){
-        this->nbrs[nI_v<axis_values...>] = self_t::indToRank(shift(offset));
+      int setNbr(const std::integer_sequence<int, axis_values...>& offset){
+        this->nbrs[nI_v<axis_values...>] = indToRank(shift(offset));
+        return 0;
       }
 
       template<class... IS>
       void setNbrs_impl(const std::tuple<IS...>&){
-        for(auto& offset : {(IS())... }){
-          setNbr(offset);
-        }
+        auto res = {setNbr(IS())...};
+        (void)res;
+        // auto test = {setNbr(IS())...};
+        // for(auto& offset : {(IS())... }){
+        //   setNbr(offset);
+        // }
       }
 
       template<class... IS>
@@ -128,10 +150,32 @@ namespace distributed{
       constexpr bool shouldIPrint() {
         return true;
       }
+
+      int getRank() const{
+        return 17;
+      }
     };
 
     template <size_t N, size_t dim>
     class Communicator : public CommunicatorData<N, dim>{
+      using Real = typename BuildOptions::real;
+      using Vect = std::array<Real, dim>;
+
+    public:
+      Communicator(int* argc, char** argv[]);
+      ~Communicator();
+
+      Vect domainStart();
+      Vect domainStop();
+    };
+
+    // Annoyingly cpp dosen't allow for function template partial specialization
+    // So we have to do a class template partial specialization, which results
+    // in a class whose members have absolutely nothing to do with the general
+    // template. This is bearable here because we provide different implementations
+    // for every member function in the N=1 case.
+    template <size_t dim>
+    class Communicator<1, dim> : public CommunicatorData<1, dim>{
       using Real = typename BuildOptions::real;
       using Vect = std::array<Real, dim>;
 
@@ -151,13 +195,21 @@ namespace distributed{
     template <size_t N, size_t dim>
     template <int... axis_values>
     void CommunicatorData<N, dim>::sendTo(void* buff, const size_t& size){
-      MPI_Send(buff, size, MPI_BYTE, nbrs[nI_v<axis_values...>], 0, MPI_COMM_WORLD);
+      // Note that if N = 2, each process will recieve two buffers
+      // from each of its neighbours. This is because
+      // nI_v<axis_values...> equals nI_v<(-axis_values)...>
+      // so we distinguish these via the first non-zero template parameter
+      constexpr int tag = 100 + meta::first_nonzero_v<axis_values...>;
+      MPI_Send(buff, size, MPI_BYTE, nbrs[nI_v<axis_values...>], tag, MPI_COMM_WORLD);
     }
 
     template <size_t N, size_t dim>
     template <int... axis_values>
     void CommunicatorData<N, dim>::recvFrom(void* buff, const size_t& size){
-      MPI_Recv(buff, size, MPI_BYTE, nbrs[nI_v<axis_values...>], MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      // Axis vales represent offsets from a process
+      // So they get inverted in the perspective of the reciever, hence the sign
+      constexpr int tag = 100 - meta::first_nonzero_v<axis_values...>;
+      MPI_Recv(buff, size, MPI_BYTE, nbrs[nI_v<axis_values...>], tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
 
     template <size_t N, size_t dim>
@@ -192,30 +244,32 @@ namespace distributed{
     Communicator<1, dim>::Communicator(int* argc, char** argv[]) {};
 
     template <size_t N, size_t dim>
-    Communicator<N, dim>::::~Communicator(){
+    Communicator<N, dim>::~Communicator(){
       MPI_Finalize();
     }
 
     template <size_t dim>
     Communicator<1, dim>::~Communicator() {};
 
-    template <size_t N>
-    auto Communicator<N>::domainStart() -> Vect{
+    // TODO: These are currently 3-D specific and thus wrong.
+
+    template <size_t N, size_t dim>
+    auto Communicator<N, dim>::domainStart() -> Vect{
       return {((Real) this->cord[0]) / N, ((Real) this->cord[1]) / N, ((Real) this->cord[2]) / N};
     }
 
-    template <>
-    auto Communicator<1>::domainStart() -> Vect{
+    template <size_t dim>
+    auto Communicator<1, dim>::domainStart() -> Vect{
       return {(Real) 0, (Real) 0, (Real) 0};
     }
 
-    template <size_t N>
-    auto Communicator<N>::domainStop() -> Vect{
+    template <size_t N, size_t dim>
+    auto Communicator<N, dim>::domainStop() -> Vect{
       return {((Real) this->cord[0] + 1) / N, ((Real) this->cord[1] + 1) / N, ((Real) this->cord[2] + 1) / N};
     }
 
-    template <>
-    auto Communicator<1>::domainStop() -> Vect{
+    template <size_t dim>
+    auto Communicator<1, dim>::domainStop() -> Vect{
       return {(Real) 1, (Real) 1, (Real) 1};
     }
   }

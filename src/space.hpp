@@ -10,7 +10,6 @@
 #include <iostream>
 #include <type_traits>
 #include "xtensor/xfixed.hpp"
-#include "xtensor/xrandom.hpp"
 #include "xtensor/xio.hpp"
 #include "xtensor/xview.hpp"
 #include "xtensor/xarray.hpp"

@@ -18,68 +18,80 @@ namespace distributed{
   namespace detail{
     template <size_t N, typename T, size_t buff_len, size_t rank, size_t... XS>
     struct _Comm_Tasks{
-      template <int... axis_values>
-      static void _task_export(
-        const space::field<T, buff_len, rank, XS...>& A, Communicator<N>& comm
-      );
+      // using self_t = _Comm_Tasks<N, T, buff_len, rank, XS...>;
+      static constexpr size_t NDIMS = sizeof...(XS);
 
-      template <int... axis_values>
-      static void _task_import(
-        space::field<T, buff_len, rank, XS...>& A, Communicator<N>& comm
-      );
-    };
-
-    template <typename T, size_t buff_len, size_t rank, size_t... XS>
-    struct _Comm_Tasks<1, T, buff_len, rank, XS...>{
       template <int... axis_values>
       static void _task_export(
         const space::field<T, buff_len, rank, XS...>& A,
-        Communicator<1>& comm
+        Communicator<N, NDIMS>& comm
       );
 
       template <int... axis_values>
       static void _task_import(
         space::field<T, buff_len, rank, XS...>& A,
-        Communicator<1>& comm
+        Communicator<N, NDIMS>& comm
+      );
+    };
+
+    // This is repeated for the reason explained in the file distributed.hpp
+    template <typename T, size_t buff_len, size_t rank, size_t... XS>
+    struct _Comm_Tasks<1, T, buff_len, rank, XS...>{
+      // using self_t = _Comm_Tasks<1, T, buff_len, rank, XS...>;
+      static constexpr size_t NDIMS = sizeof...(XS);
+
+      template <int... axis_values>
+      static void _task_export(
+        const space::field<T, buff_len, rank, XS...>& A,
+        Communicator<1, NDIMS>& comm
+      );
+
+      template <int... axis_values>
+      static void _task_import(
+        space::field<T, buff_len, rank, XS...>& A,
+        Communicator<1, NDIMS>& comm
       );
     };
 
     template <size_t N, typename T, size_t buff_len, size_t rank, size_t... XS>
     template <int... axis_values>
     void _Comm_Tasks<N, T, buff_len, rank, XS...>::_task_export(
-      const space::field<T, buff_len, rank, XS...>& A, Communicator<N>& comm
+      const space::field<T, buff_len, rank, XS...>& A,
+      Communicator<N, NDIMS>& comm
     ){
       constexpr size_t len =
         space::field<T, buff_len, rank, XS...>
         ::template bufferSize<axis_values...>();
       T buff[len];
       A.template exportBuffer<axis_values...>(buff);
-      comm.sendTo(buff, sizeof(T) * len, axis_values...);
+      comm.template sendTo<axis_values...>(buff, sizeof(T) * len);
     }
 
     template <typename T, size_t buff_len, size_t rank, size_t... XS>
     template <int... axis_values>
     void _Comm_Tasks<1, T, buff_len, rank, XS...>::_task_export(
-      const space::field<T, buff_len, rank, XS...>& A, Communicator<1>& comm
+      const space::field<T, buff_len, rank, XS...>& A,
+      Communicator<1, NDIMS>& comm
     ) {};
 
     template <size_t N, typename T, size_t buff_len, size_t rank, size_t... XS>
     template <int... axis_values>
     void _Comm_Tasks<N, T, buff_len, rank, XS...>::_task_import(
-      space::field<T, buff_len, rank, XS...>& A, Communicator<N>& comm
+      space::field<T, buff_len, rank, XS...>& A,
+      Communicator<N, NDIMS>& comm
     ){
       constexpr size_t len =
         space::field<T, buff_len, rank, XS...>
         ::template bufferSize<axis_values...>();
       T buff[len];
-      comm.recvFrom(buff, sizeof(T) * len, axis_values...);
+      comm.template recvFrom<axis_values...>(buff, sizeof(T) * len);
       A.template importBuffer<axis_values...>(buff);
     }
 
     template <typename T, size_t buff_len, size_t rank, size_t... XS>
     template <int... axis_values>
     void _Comm_Tasks<1, T, buff_len, rank, XS...>::_task_import(
-      space::field<T, buff_len, rank, XS...>& A, Communicator<1>& comm
+      space::field<T, buff_len, rank, XS...>& A, Communicator<1, NDIMS>& comm
     ){
       constexpr size_t len =
         space::field<T, buff_len, rank, XS...>
@@ -90,8 +102,9 @@ namespace distributed{
     }
 
     template <size_t N, typename T, size_t buff_len, size_t rank, size_t... XS, int... axis_values>
-    auto&& launchExport(
-      space::field<T, buff_len, rank, XS...>& A, Communicator<N>& comm,
+    auto launchExport(
+      space::field<T, buff_len, rank, XS...>& A,
+      Communicator<N, sizeof...(XS)>& comm,
       const std::integer_sequence<int, axis_values...>&
     ){
       return std::async(
@@ -102,8 +115,9 @@ namespace distributed{
     }
 
     template <size_t N, typename T, size_t buff_len, size_t rank, size_t... XS, int... axis_values>
-    auto&& launchImport(
-      space::field<T, buff_len, rank, XS...>& A, Communicator<N>& comm,
+    auto launchImport(
+      space::field<T, buff_len, rank, XS...>& A,
+      Communicator<N, sizeof...(XS)>& comm,
       const std::integer_sequence<int, axis_values...>&
     ){
       return std::async(
@@ -115,7 +129,8 @@ namespace distributed{
 
     template <size_t N, typename T, size_t buff_len, size_t rank, size_t... XS, class... IS>
     void communicateBuffers_impl(
-      space::field<T, buff_len, rank, XS...>& A, Communicator<N>& comm,
+      space::field<T, buff_len, rank, XS...>& A,
+      Communicator<N, sizeof...(XS)>& comm,
       const std::tuple<IS...>&
     ){
       for(auto& task : {launchExport(A, comm, IS())..., launchImport(A, comm, IS())...}) {
