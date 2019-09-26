@@ -3,9 +3,9 @@ cmake_minimum_required(VERSION 3.8.0)
 project(fluids CXX)
 
 set(_REAL double)
-set(_L 20)
-set(_W 20)
-set(_H 20)
+set(_L 2)
+set(_W 2)
+set(_H 2)
 set(_DOMAIN_SCALE 3)
 
 # set(CMAKE_CXX_FLAGS "-O3 -Wall -std=c++17 -xMIC-AVX512")

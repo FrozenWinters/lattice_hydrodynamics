@@ -82,7 +82,7 @@ namespace distributed{
       }
 
       bool shouldIPrint() const{
-        return (this->rank == 0);
+        return (this->rank == 6);
       }
 
     protected:
@@ -122,8 +122,6 @@ namespace distributed{
 
       template<int... axis_values>
       int setNbr(const std::integer_sequence<int, axis_values...>& offset){
-        if(shouldIPrint())
-          printf("Setting %d %d %d with %d\n", axis_values..., indToRank(shift(offset)));
         this->nbrs[nI_v<axis_values...>] = indToRank(shift(offset));
         return 0;
       }
@@ -132,10 +130,6 @@ namespace distributed{
       void setNbrs_impl(const std::tuple<IS...>&){
         auto res = {setNbr(IS())...};
         (void)res;
-        // auto test = {setNbr(IS())...};
-        // for(auto& offset : {(IS())... }){
-        //   setNbr(offset);
-        // }
       }
 
       template<class... IS>
@@ -204,8 +198,6 @@ namespace distributed{
       // nI_v<axis_values...> equals nI_v<(-axis_values)...>
       // so we distinguish these via the first non-zero template parameter
       constexpr int tag = 100 + meta::first_nonzero_v<axis_values...>;
-      if(shouldIPrint())
-        printf("sending to rank %d with tag %d size %d\n", nbrs[nI_v<axis_values...>], tag, (int) size);
       MPI_Send(buff, size, MPI_BYTE, nbrs[nI_v<axis_values...>], tag, MPI_COMM_WORLD);
     }
 
@@ -215,8 +207,6 @@ namespace distributed{
       // Axis vales represent offsets from a process
       // So they get inverted in the perspective of the reciever, hence the sign
       constexpr int tag = 100 - meta::first_nonzero_v<axis_values...>;
-      if(shouldIPrint())
-        printf("rcv from rank %d with tag %d\n", nbrs[nI_v<axis_values...>], tag);
       MPI_Recv(buff, size, MPI_BYTE, nbrs[nI_v<axis_values...>], tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
 
@@ -263,8 +253,6 @@ namespace distributed{
 
     template <size_t N, size_t dim>
     auto Communicator<N, dim>::domainStart() -> Vect{
-      if(this->shouldIPrint())
-        std::cout << "Domain start is " << ((Real) this->cord[0]) / N << " " << ((Real) this->cord[1]) / N << " " << ((Real) this->cord[2]) / N << std::endl;
       return {((Real) this->cord[0]) / N, ((Real) this->cord[1]) / N, ((Real) this->cord[2]) / N};
     }
 
@@ -275,8 +263,6 @@ namespace distributed{
 
     template <size_t N, size_t dim>
     auto Communicator<N, dim>::domainStop() -> Vect{
-      if(this->shouldIPrint())
-        std::cout << "Domain stop is " << ((Real) this->cord[0] + 1) / N << " " << ((Real) this->cord[1] + 1) / N << " " << ((Real) this->cord[2] + 1) / N << std::endl;
       return {((Real) this->cord[0] + 1) / N, ((Real) this->cord[1] + 1) / N, ((Real) this->cord[2] + 1) / N};
     }
 

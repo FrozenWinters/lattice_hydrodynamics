@@ -19,7 +19,6 @@ namespace distributed{
   namespace detail{
     template <size_t N, typename T, size_t buff_len, size_t rank, size_t... XS>
     struct _Comm_Tasks{
-      // using self_t = _Comm_Tasks<N, T, buff_len, rank, XS...>;
       static constexpr size_t NDIMS = sizeof...(XS);
 
       template <int... axis_values>
@@ -38,7 +37,6 @@ namespace distributed{
     // This is repeated for the reason explained in the file distributed.hpp
     template <typename T, size_t buff_len, size_t rank, size_t... XS>
     struct _Comm_Tasks<1, T, buff_len, rank, XS...>{
-      // using self_t = _Comm_Tasks<1, T, buff_len, rank, XS...>;
       static constexpr size_t NDIMS = sizeof...(XS);
 
       template <int... axis_values>
@@ -86,8 +84,6 @@ namespace distributed{
         ::template bufferSize<axis_values...>();
       T buff[len];
       comm.template recvFrom<axis_values...>(buff, sizeof(T) * len);
-      if(comm.shouldIPrint())
-        std::cout << "Recieved " << buff[0] << std::endl;
       A.template importBuffer<axis_values...>(buff);
     }
 
