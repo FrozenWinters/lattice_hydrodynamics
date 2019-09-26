@@ -3,10 +3,10 @@ cmake_minimum_required(VERSION 3.8.0)
 project(fluids CXX)
 
 set(_REAL double)
-set(_L 3)
-set(_W 3)
+set(_L 2)
+set(_W 2)
 set(_H 2)
-set(_DOMAIN_SCALE 2)
+set(_DOMAIN_SCALE 3)
 
 # set(CMAKE_CXX_FLAGS "-O3 -Wall -std=c++17 -xMIC-AVX512")
 set(CMAKE_CXX_COMPILER "mpicxx")
@@ -28,7 +28,7 @@ add_executable(prog.elf ${PROJECT_SOURCE_DIR}/src/main.cc)
 # )
 
 add_custom_command(TARGET prog.elf POST_BUILD
-  COMMAND time mpirun -np 8 --oversubscribe prog.elf
+  COMMAND time mpirun -np 27 --oversubscribe prog.elf
   COMMENT "Running timed test:"
 )
 

@@ -1,5 +1,5 @@
 #include <build_options.h>
-#include "comm.hpp"
+#include "agency.hpp"
 
 using my_tensor = space::vector_field<typename BuildOptions::real, 1, config.L, config.W, config.H>;
 using my_scalar = space::scalar_field<typename BuildOptions::real, 1, config.L, config.W, config.H>;
@@ -17,11 +17,7 @@ int main(int argc, char* argv[]){
   if(comm.shouldIPrint()){
     std::cout << Y << std::endl;
     std::cout << Z << std::endl;
-    std::cout << Y.at(0, 0, 0, 0) << std::endl;
-    std::cout << Z.at(0, 0, 0) << std::endl;
-    Y.print_buffer(0, 1);
-    Y.print_buffer(0, -1);
-    Z.print_buffer(1, 1);
-    Z.print_buffer(1, -1);
+    Y.printAll();
+    Z.printAll();
   }
 }
