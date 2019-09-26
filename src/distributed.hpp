@@ -82,7 +82,7 @@ namespace distributed{
       }
 
       bool shouldIPrint() const{
-        return (this->rank == 6);
+        return (this->rank == 0);
       }
 
     protected:

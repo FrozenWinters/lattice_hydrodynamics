@@ -187,6 +187,11 @@ namespace space{
 
     auto mesh = meshgrid(linspace<T>(pi * (2 * start[IS] + len[IS] / XS), pi * (2 * end[IS] - len[IS] / XS), XS)... );
 
+    // Most useful debugging values ever:
+    // auto X = get<0>(mesh);
+    // auto Y = get<1>(mesh);
+    // auto Z = get<2>(mesh);
+    
     auto X = cos(get<2>(mesh)) * sin(get<1>(mesh)) * sin(get<0>(mesh));
     auto Y = -0.5 * cos(get<1>(mesh)) * sin(get<0>(mesh)) * sin(get<2>(mesh));
     auto Z = -0.5 * cos(get<0>(mesh)) * sin(get<2>(mesh)) * sin(get<1>(mesh));
