@@ -12,6 +12,7 @@
 #include "distributed.hpp"
 #include "stencil.hpp"
 #include <future>
+#include <stdio.h>
 
 namespace distributed{
 
@@ -85,6 +86,8 @@ namespace distributed{
         ::template bufferSize<axis_values...>();
       T buff[len];
       comm.template recvFrom<axis_values...>(buff, sizeof(T) * len);
+      if(comm.shouldIPrint())
+        std::cout << "Recieved " << buff[0] << std::endl;
       A.template importBuffer<axis_values...>(buff);
     }
 

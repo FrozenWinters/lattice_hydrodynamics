@@ -14,6 +14,8 @@
 #include <mpi.h>
 #include "stencil.hpp"
 
+#define _dims_used_in_build 3
+
 namespace meta{
   template<size_t a, size_t n>
   struct pow{
@@ -80,7 +82,7 @@ namespace distributed{
       }
 
       bool shouldIPrint() const{
-        return (this->rank == 2);
+        return (this->rank == 0);
       }
 
     protected:
@@ -99,7 +101,7 @@ namespace distributed{
       inline static Ind rankToInd(int rank){
         Ind result;
         for(int i = 0; i < dim; ++i){
-          result[i] = rank % N;
+          result[dim - i - 1] = rank % N;
           rank /= N;
         }
         return result;
@@ -120,6 +122,8 @@ namespace distributed{
 
       template<int... axis_values>
       int setNbr(const std::integer_sequence<int, axis_values...>& offset){
+        if(shouldIPrint())
+          printf("Setting %d %d %d with %d\n", axis_values..., indToRank(shift(offset)));
         this->nbrs[nI_v<axis_values...>] = indToRank(shift(offset));
         return 0;
       }
@@ -188,7 +192,7 @@ namespace distributed{
     };
   }
 
-  using Communicator = detail::Communicator<config.DOMAIN_SCALE, 3>;
+  using Communicator = detail::Communicator<config.DOMAIN_SCALE, _dims_used_in_build>;
 
   namespace detail{
 
@@ -200,6 +204,8 @@ namespace distributed{
       // nI_v<axis_values...> equals nI_v<(-axis_values)...>
       // so we distinguish these via the first non-zero template parameter
       constexpr int tag = 100 + meta::first_nonzero_v<axis_values...>;
+      if(shouldIPrint())
+        printf("sending to rank %d with tag %d size %d\n", nbrs[nI_v<axis_values...>], tag, (int) size);
       MPI_Send(buff, size, MPI_BYTE, nbrs[nI_v<axis_values...>], tag, MPI_COMM_WORLD);
     }
 
@@ -209,6 +215,8 @@ namespace distributed{
       // Axis vales represent offsets from a process
       // So they get inverted in the perspective of the reciever, hence the sign
       constexpr int tag = 100 - meta::first_nonzero_v<axis_values...>;
+      if(shouldIPrint())
+        printf("rcv from rank %d with tag %d\n", nbrs[nI_v<axis_values...>], tag);
       MPI_Recv(buff, size, MPI_BYTE, nbrs[nI_v<axis_values...>], tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
 
@@ -255,6 +263,8 @@ namespace distributed{
 
     template <size_t N, size_t dim>
     auto Communicator<N, dim>::domainStart() -> Vect{
+      if(this->shouldIPrint())
+        std::cout << "Domain start is " << ((Real) this->cord[0]) / N << " " << ((Real) this->cord[1]) / N << " " << ((Real) this->cord[2]) / N << std::endl;
       return {((Real) this->cord[0]) / N, ((Real) this->cord[1]) / N, ((Real) this->cord[2]) / N};
     }
 
@@ -265,6 +275,8 @@ namespace distributed{
 
     template <size_t N, size_t dim>
     auto Communicator<N, dim>::domainStop() -> Vect{
+      if(this->shouldIPrint())
+        std::cout << "Domain stop is " << ((Real) this->cord[0] + 1) / N << " " << ((Real) this->cord[1] + 1) / N << " " << ((Real) this->cord[2] + 1) / N << std::endl;
       return {((Real) this->cord[0] + 1) / N, ((Real) this->cord[1] + 1) / N, ((Real) this->cord[2] + 1) / N};
     }
 

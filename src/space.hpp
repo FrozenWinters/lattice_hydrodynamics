@@ -71,20 +71,20 @@ namespace space{
     template <int... axis_values>
     void importBuffer(T* buff);
 
-    template <size_t... IS>
-    void print_buffer_impl(size_t axis, int dir, const std::index_sequence<IS...>&){
+    template<int... axis_values>
+    void print_buffer() {
       auto data_view = view(data, all(),
-        ((IS != axis)
-          ? range(buff_len, buff_len + XS)
-          : (dir == 1) ? range(XS + buff_len, XS + 2 * buff_len) :  range(0, buff_len)
+        (axis_values
+          ? (axis_values > 0) ? range(XS + buff_len, XS + 2 * buff_len) : range(0, buff_len)
+          : range(buff_len, buff_len + XS)
         )...
       );
-      std::cout << "Buffer from axis: " << axis << " dir: " << dir << std::endl;
+      std::cout << "Buffer: " << std::endl;
       std::cout << data_view << std::endl;
     }
 
-    void print_buffer(size_t axis, int dir){
-      print_buffer_impl(axis, dir, meta::index_sequence_for<XS...>());
+    void printAll(){
+      std::cout << data << std::endl;
     }
 
   private:
